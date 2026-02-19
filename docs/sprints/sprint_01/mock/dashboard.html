@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>テキパッキー</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=Space+Grotesk:wght@700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0e17;
+      --surface: #1a1828;
+      --surface2: #242235;
+      --accent: #ff6b35;
+      --accent2: #ffd166;
+      --reward: #06d6a0;
+      --text: #fffffe;
+      --muted: #7c7a8e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .point-display {
+      background: linear-gradient(135deg, #ff6b35 0%, #ff9500 100%);
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .point-display::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 120px;
+      height: 120px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 50%;
+    }
+
+    .point-display::after {
+      content: '';
+      position: absolute;
+      bottom: -40px;
+      left: 20px;
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 50%;
+    }
+
+    .point-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 8vw, 4rem);
+      font-weight: 700;
+      line-height: 1;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .tab-btn.active-action {
+      background: var(--accent);
+      color: white;
+    }
+
+    .tab-btn.active-reward {
+      background: var(--reward);
+      color: #0f0e17;
+    }
+
+    .action-card {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1.5px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .action-card.reward-card:hover {
+      border-color: var(--reward);
+    }
+
+    .pt-badge {
+      background: var(--surface2);
+      color: var(--accent2);
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .pt-badge.reward {
+      color: var(--reward);
+    }
+
+    .done-section {
+      background: var(--surface);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .done-header {
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      user-select: none;
+    }
+
+    .done-header:hover {
+      color: var(--text);
+    }
+
+    .done-item {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--bg);
+      font-size: 0.9rem;
+    }
+
+    .count-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .count-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: none;
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .count-btn:hover {
+      background: var(--accent);
+    }
+
+    .count-num {
+      font-weight: 700;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+
+    @media (min-width: 640px) {
+      .modal-overlay {
+        align-items: center;
+        padding: 20px;
+      }
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border-radius: 0;
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      padding: 28px 24px 40px;
+      overflow-y: auto;
+      animation: slideUp 0.25s ease;
+    }
+
+    @media (min-width: 640px) {
+      .modal-box {
+        border-radius: 24px;
+        padding: 32px;
+        height: auto;
+        max-height: 90vh;
+        max-width: 560px;
+      }
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(40px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .form-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid transparent;
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+    }
+
+    .option-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .option-btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      border: 1.5px solid var(--surface2);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+
+    .option-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .option-btn.selected-action {
+      border-color: var(--accent);
+      background: rgba(255, 107, 53, 0.15);
+      color: var(--accent);
+    }
+
+    .option-btn.selected-reward {
+      border-color: var(--reward);
+      background: rgba(6, 214, 160, 0.15);
+      color: var(--reward);
+    }
+
+    .pt-preview {
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 14px 18px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .pt-preview span {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent2);
+      display: block;
+      line-height: 1.2;
+    }
+
+    .pt-preview.reward-preview span {
+      color: var(--reward);
+    }
+
+    /* Plus button */
+    .fab {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(255, 107, 53, 0.5);
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .fab:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 28px rgba(255, 107, 53, 0.6);
+    }
+
+    /* Point flash */
+    @keyframes pointFlash {
+      0% {
+        transform: scale(1);
+      }
+
+      30% {
+        transform: scale(1.08);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .flash {
+      animation: pointFlash 0.3s ease;
+    }
+
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translateY(-60px);
+      }
+    }
+
+    .float-pt {
+      position: fixed;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      pointer-events: none;
+      animation: floatUp 1s ease forwards;
+      z-index: 999;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .delete-btn:hover {
+      background: rgba(255, 80, 80, 0.15);
+      color: #ff5050;
+    }
+
+    .mode-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    /* PC layout */
+    @media (min-width: 768px) {}
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 900;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .chevron {
+      transition: transform 0.2s;
+      display: inline-block;
+    }
+
+    .chevron.open {
+      transform: rotate(180deg);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--surface2);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="max-w-2xl mx-auto px-4 py-6 md:py-10">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-xl font-black tracking-tight" style="letter-spacing:-0.02em">テキパッキー <span
+            style="color:var(--accent)">✦</span></h1>
+        <p class="text-xs mt-0.5" style="color:var(--muted)">今日もテキパキいこう</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <!-- Mode selector -->
+          <select id="modeSelect" onchange="changeMode(this.value)"
+            class="text-xs font-bold rounded-xl px-3 py-2 border-none outline-none cursor-pointer"
+            style="background:var(--surface2); color:var(--text)">
+            <option value="easy">🟢 イージー</option>
+            <option value="normal" selected>🟡 ノーマル</option>
+            <option value="hard">🔴 ハード</option>
+          </select>
+          <div class="relative" id="modeHelpWrap">
+            <button onclick="toggleModeTooltip()"
+              style="width:24px;height:24px;border-radius:50%;background:var(--surface2);border:none;color:var(--muted);cursor:pointer;font-size:0.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;">?</button>
+            <div id="modeTooltip" class="hidden"
+              style="position:absolute;right:0;top:32px;background:var(--surface);border:1.5px solid var(--surface2);border-radius:14px;padding:14px 16px;width:240px;z-index:50;font-size:0.82rem;line-height:1.7;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+              <div class="font-black mb-2" style="color:var(--text)">モードについて</div>
+              <div class="mb-1">🟢 <b>イージー</b></div>
+              <div style="color:var(--muted)" class="mb-2">獲得 ×1.5 ／ 消費 ×0.7<br>ポイントが貯まりやすい</div>
+              <div class="mb-1">🟡 <b>ノーマル</b></div>
+              <div style="color:var(--muted)" class="mb-2">獲得 ×1.0 ／ 消費 ×1.0<br>標準バランス</div>
+              <div class="mb-1">🔴 <b>ハード</b></div>
+              <div style="color:var(--muted)">獲得 ×0.8 ／ 消費 ×1.5<br>ポイントが貯まりにくい</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Point display -->
+    <div class="point-display p-5 mb-5 flex items-center justify-between" id="pointDisplay">
+      <div class="relative z-10">
+        <div class="text-xs font-bold opacity-80 mb-1 uppercase tracking-widest">現在のポイント</div>
+        <div class="point-display-num flex items-end gap-2">
+          <span class="point-number" id="pointNum">20</span>
+          <span class="text-2xl font-black mb-1 opacity-90">pt</span>
+        </div>
+        <div class="text-xs opacity-70 mt-1" id="modeLabel">ノーマルモード</div>
+      </div>
+      <div class="relative z-10 flex gap-4 text-right">
+        <div>
+          <div class="text-xs font-bold opacity-70 mb-1">今日の獲得</div>
+          <div class="font-black text-xl" id="todayEarned"
+            style="font-family:'Space Grotesk',sans-serif;text-shadow:0 2px 10px rgba(0,0,0,0.2)">+0<span
+              class="text-sm font-bold ml-0.5">pt</span></div>
+        </div>
+        <div>
+          <div class="text-xs font-bold opacity-70 mb-1">今日の消費</div>
+          <div class="font-black text-xl" id="todaySpent"
+            style="font-family:'Space Grotesk',sans-serif;text-shadow:0 2px 10px rgba(0,0,0,0.2)">-0<span
+              class="text-sm font-bold ml-0.5">pt</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div>
+        <!-- Today's log accordion -->
+        <div class="done-section mb-5">
+          <div class="done-header" onclick="toggleDone()">
+            <span>📋 今日の行動ログ</span>
+            <div class="flex items-center gap-2">
+              <span id="doneEarnedBadge" class="text-xs font-black" style="color:var(--accent2)"></span>
+              <span class="chevron open" id="doneChevron">▼</span>
+            </div>
+          </div>
+          <div id="doneList">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <!-- Today's reward log accordion -->
+        <div class="done-section mb-5">
+          <div class="done-header" onclick="toggleRewardDone()">
+            <span>🎁 今日のご褒美ログ</span>
+            <div class="flex items-center gap-2">
+              <span id="doneSpentBadge" class="text-xs font-black" style="color:var(--reward)"></span>
+              <span class="chevron open" id="rewardDoneChevron">▼</span>
+            </div>
+          </div>
+          <div id="rewardDoneList">
+            <!-- populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <!-- Tabs -->
+        <div class="flex items-center gap-2 mb-4">
+          <div class="flex gap-2 flex-1 p-1.5 rounded-2xl" style="background:var(--surface)">
+            <button class="tab-btn active-action" id="tabAction" onclick="switchTab('action')">⚡ 行動リスト</button>
+            <button class="tab-btn" id="tabReward" onclick="switchTab('reward')">🎁 ご褒美</button>
+          </div>
+          <button class="fab" onclick="openModal(state.currentTab)" title="追加"
+            style="width:40px;height:40px;font-size:1.2rem;flex-shrink:0;">＋</button>
+        </div>
+
+        <!-- Filter tags -->
+        <div id="filterArea" class="mb-3">
+          <!-- 検索・ソート -->
+          <div class="flex gap-2 mb-2">
+            <div class="relative flex-1">
+              <span
+                style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.9rem;pointer-events:none;">🔍</span>
+              <input type="text" id="searchInput" placeholder="キーワードで検索" oninput="onSearchInput(this.value)"
+                style="width:100%;background:var(--surface);border:1.5px solid transparent;border-radius:10px;padding:8px 12px 8px 32px;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;transition:border-color 0.15s;"
+                onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='transparent'">
+            </div>
+            <button id="sortBtn" onclick="cycleSortOrder()"
+              style="padding:0 14px;border-radius:10px;border:1.5px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:0.8rem;font-weight:700;white-space:nowrap;transition:all 0.15s;flex-shrink:0;">
+              ↕ 並び替え
+            </button>
+          </div>
+          <!-- タグフィルター -->
+          <div id="filterTagChips" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- Action list -->
+        <div id="actionList">
+          <p class="section-title">タップしてポイント獲得</p>
+          <!-- populated by JS -->
+        </div>
+
+        <!-- Reward list -->
+        <div id="rewardList" class="hidden">
+          <p class="section-title">タップしてポイント消費</p>
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay hidden" id="modalOverlay" onclick="closeModalOnBg(event)">
+    <div class="modal-box">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-black" id="modalTitle">行動を追加</h2>
+        <div class="flex items-center gap-2">
+          <span id="modalModeBadge" class="mode-badge" style="background:var(--surface2);color:var(--accent2)"></span>
+          <button onclick="closeModal()"
+            style="color:var(--muted);background:var(--surface2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+      </div>
+
+      <!-- Type switcher (add mode only) -->
+      <div class="flex gap-2 mb-5 p-1 rounded-xl" style="background:var(--surface2)" id="typeSwitcher">
+        <button class="tab-btn active-action" id="typeActionBtn" onclick="switchModalType('action')"
+          style="padding:8px;font-size:0.85rem;">⚡ 行動</button>
+        <button class="tab-btn" id="typeRewardBtn" onclick="switchModalType('reward')"
+          style="padding:8px;font-size:0.85rem;">🎁 ご褒美</button>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <div>
+          <label class="form-label">タイトル</label>
+          <input type="text" id="formTitle" class="form-input" placeholder="例: 朝ごはんを食べる">
+        </div>
+        <div>
+          <label class="form-label">説明（任意）</label>
+          <input type="text" id="formDesc" class="form-input" placeholder="メモや詳細">
+        </div>
+        <div>
+          <label class="form-label">タグ（任意）</label>
+          <div id="existingTagSuggest" class="flex flex-wrap gap-2 mb-2"></div>
+          <div class="flex gap-2 mb-2">
+            <input type="text" id="formTagInput" class="form-input" placeholder="新しいタグを入力してEnter" style="flex:1;"
+              onkeydown="handleTagInput(event)" oninput="renderExistingTagSuggest()">
+            <button type="button" onclick="addTagFromInput()"
+              style="padding:0 16px;border-radius:10px;border:none;background:var(--surface2);color:var(--muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;">＋</button>
+          </div>
+          <div id="formTagList" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- Action fields -->
+        <div id="actionFields">
+          <div class="mb-4">
+            <label class="form-label">ハードル（面倒くささ）</label>
+            <div class="option-group" id="hurdleOptions">
+              <button class="option-btn selected-action" data-val="1" onclick="selectOption('hurdle',this)">低
+                (×1)</button>
+              <button class="option-btn" data-val="2" onclick="selectOption('hurdle',this)">中 (×2)</button>
+              <button class="option-btn" data-val="3" onclick="selectOption('hurdle',this)">高 (×3)</button>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">かかる時間</label>
+            <div class="option-group" id="timeOptions"
+              style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+              <button class="option-btn selected-action" data-val="1" onclick="selectOption('time',this)">5分以内
+                (×1)</button>
+              <button class="option-btn" data-val="2" onclick="selectOption('time',this)">15分以内 (×2)</button>
+              <button class="option-btn" data-val="3" onclick="selectOption('time',this)">30分以内 (×3)</button>
+              <button class="option-btn" data-val="4" onclick="selectOption('time',this)">1時間以内 (×4)</button>
+              <button class="option-btn" data-val="5" onclick="selectOption('time',this)">3時間以内 (×5)</button>
+              <button class="option-btn" data-val="6" onclick="selectOption('time',this)">3時間以上 (×6)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reward fields -->
+        <div id="rewardFields" class="hidden">
+          <div class="mb-4">
+            <label class="form-label">満足度</label>
+            <div class="option-group" id="satisfactionOptions">
+              <button class="option-btn selected-reward" data-val="1" onclick="selectOption('satisfaction',this)">小
+                (×1)</button>
+              <button class="option-btn" data-val="2" onclick="selectOption('satisfaction',this)">中 (×2)</button>
+              <button class="option-btn" data-val="3" onclick="selectOption('satisfaction',this)">大 (×3)</button>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">かかる時間</label>
+            <div class="option-group" id="rewardTimeOptions"
+              style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+              <button class="option-btn selected-reward" data-val="1" onclick="selectOption('rewardTime',this)">5分以内
+                (×1)</button>
+              <button class="option-btn" data-val="2" onclick="selectOption('rewardTime',this)">15分以内 (×2)</button>
+              <button class="option-btn" data-val="3" onclick="selectOption('rewardTime',this)">30分以内 (×3)</button>
+              <button class="option-btn" data-val="4" onclick="selectOption('rewardTime',this)">1時間以内 (×4)</button>
+              <button class="option-btn" data-val="5" onclick="selectOption('rewardTime',this)">3時間以内 (×5)</button>
+              <button class="option-btn" data-val="6" onclick="selectOption('rewardTime',this)">3時間以上 (×6)</button>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">金額</label>
+            <div class="option-group" id="priceOptions"
+              style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+              <button class="option-btn selected-reward" data-val="1" onclick="selectOption('price',this)">0円
+                (×1)</button>
+              <button class="option-btn" data-val="2" onclick="selectOption('price',this)">500円以内 (×2)</button>
+              <button class="option-btn" data-val="3" onclick="selectOption('price',this)">1000円以内 (×3)</button>
+              <button class="option-btn" data-val="4" onclick="selectOption('price',this)">5000円以内 (×4)</button>
+              <button class="option-btn" data-val="5" onclick="selectOption('price',this)">1万円以内 (×5)</button>
+              <button class="option-btn" data-val="6" onclick="selectOption('price',this)">1万円以上 (×6)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pt preview -->
+        <div class="pt-preview" id="ptPreview">
+          <span id="ptPreviewNum">1</span><span id="ptPreviewLabel"> pt 獲得</span>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-3 mt-1">
+          <button id="deleteItemBtn" onclick="deleteItem()" class="hidden px-4 py-3 rounded-xl font-bold text-sm flex-1"
+            style="background:rgba(255,80,80,0.1);color:#ff5050;border:none;cursor:pointer;">削除</button>
+          <button onclick="saveItem()" class="px-4 py-3 rounded-xl font-bold text-sm flex-1"
+            style="background:var(--accent);color:white;border:none;cursor:pointer;" id="saveBtn">追加する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- State ---
+    let state = {
+      points: 20,
+      mode: 'normal',
+      currentTab: 'action',
+      modalType: 'action',
+      editingId: null,
+      doneOpen: true,
+      rewardDoneOpen: true,
+      actions: [
+        { id: 1, title: '朝ごはんを食べる', desc: '', tags: ['食事', '朝'], hurdle: 1, time: 1, pt: 1 },
+        { id: 2, title: '風呂に入る', desc: 'シャワーでもOK', tags: ['衛生', 'セルフケア'], hurdle: 2, time: 2, pt: 4 },
+        { id: 3, title: '食器を片付ける', desc: '', tags: ['家事', 'キッチン'], hurdle: 1, time: 1, pt: 1 },
+        { id: 4, title: '部屋を掃除する', desc: '', tags: ['家事', '掃除'], hurdle: 3, time: 3, pt: 9 },
+        { id: 5, title: '洗濯する', desc: '', tags: ['家事'], hurdle: 2, time: 2, pt: 4 },
+        { id: 6, title: '洗濯物をたたむ', desc: '', tags: ['家事'], hurdle: 2, time: 2, pt: 4 },
+        { id: 7, title: 'ゴミを捨てる', desc: '', tags: ['家事', '掃除'], hurdle: 1, time: 1, pt: 1 },
+        { id: 8, title: 'トイレを掃除する', desc: '', tags: ['家事', '掃除'], hurdle: 3, time: 2, pt: 6 },
+        { id: 9, title: '歯磨きをする', desc: '', tags: ['衛生', '朝', '夜'], hurdle: 1, time: 1, pt: 1 },
+        { id: 10, title: '顔を洗う', desc: '', tags: ['衛生', '朝'], hurdle: 1, time: 1, pt: 1 },
+        { id: 11, title: '水を飲む', desc: '200ml以上', tags: ['健康', 'セルフケア'], hurdle: 1, time: 1, pt: 1 },
+        { id: 12, title: 'ストレッチをする', desc: '5分以上', tags: ['運動', '健康'], hurdle: 1, time: 1, pt: 1 },
+        { id: 13, title: '散歩に行く', desc: '15分以上', tags: ['運動', '外出'], hurdle: 2, time: 2, pt: 4 },
+        { id: 14, title: 'ジョギングする', desc: '', tags: ['運動', '外出'], hurdle: 3, time: 3, pt: 9 },
+        { id: 15, title: '筋トレをする', desc: '', tags: ['運動', '健康'], hurdle: 3, time: 2, pt: 6 },
+        { id: 16, title: '昼ごはんを食べる', desc: '', tags: ['食事'], hurdle: 1, time: 1, pt: 1 },
+        { id: 17, title: '夜ごはんを食べる', desc: '', tags: ['食事', '夜'], hurdle: 1, time: 1, pt: 1 },
+        { id: 18, title: '薬を飲む', desc: '', tags: ['健康', 'セルフケア'], hurdle: 1, time: 1, pt: 1 },
+        { id: 19, title: 'メールを返信する', desc: '', tags: ['仕事', 'タスク'], hurdle: 2, time: 2, pt: 4 },
+        { id: 20, title: 'タスクリストを整理する', desc: '', tags: ['仕事', 'タスク'], hurdle: 2, time: 2, pt: 4 },
+        { id: 21, title: '読書をする', desc: '10ページ以上', tags: ['学習', '自己投資'], hurdle: 2, time: 2, pt: 4 },
+        { id: 22, title: '日記を書く', desc: '', tags: ['メンタル', '振り返り'], hurdle: 2, time: 1, pt: 2 },
+        { id: 23, title: '勉強する', desc: '30分以上', tags: ['学習', '自己投資'], hurdle: 3, time: 3, pt: 9 },
+        { id: 24, title: 'シンクを磨く', desc: '', tags: ['家事', 'キッチン', '掃除'], hurdle: 2, time: 1, pt: 2 },
+        { id: 25, title: '窓を拭く', desc: '', tags: ['家事', '掃除'], hurdle: 2, time: 2, pt: 4 },
+        { id: 26, title: '冷蔵庫を整理する', desc: '', tags: ['家事', 'キッチン'], hurdle: 2, time: 2, pt: 4 },
+        { id: 27, title: '買い物リストを作る', desc: '', tags: ['タスク', '準備'], hurdle: 1, time: 1, pt: 1 },
+        { id: 28, title: '買い物に行く', desc: '', tags: ['外出', 'タスク'], hurdle: 2, time: 3, pt: 6 },
+        { id: 29, title: '布団を干す', desc: '', tags: ['家事'], hurdle: 2, time: 1, pt: 2 },
+        { id: 30, title: '早起きする', desc: '7時前に起床', tags: ['習慣', '朝'], hurdle: 3, time: 1, pt: 3 },
+        { id: 31, title: '定時に寝る', desc: '24時前', tags: ['習慣', '夜', '健康'], hurdle: 3, time: 1, pt: 3 },
+        { id: 32, title: 'SNSを30分以内にする', desc: '', tags: ['習慣', 'メンタル'], hurdle: 3, time: 1, pt: 3 },
+        { id: 33, title: '机を片付ける', desc: '', tags: ['家事', '掃除'], hurdle: 2, time: 1, pt: 2 },
+        { id: 34, title: 'プログラミングの勉強', desc: '', tags: ['学習', '仕事', '自己投資'], hurdle: 3, time: 4, pt: 12 },
+        { id: 35, title: '英語の勉強', desc: '単語10個', tags: ['学習', '自己投資'], hurdle: 2, time: 1, pt: 2 },
+        { id: 36, title: '瞑想する', desc: '5分', tags: ['メンタル', 'セルフケア'], hurdle: 2, time: 1, pt: 2 },
+        { id: 37, title: '深呼吸する', desc: '10回', tags: ['メンタル', 'セルフケア'], hurdle: 1, time: 1, pt: 1 },
+        { id: 38, title: '友達に連絡する', desc: '', tags: ['人間関係'], hurdle: 2, time: 1, pt: 2 },
+        { id: 39, title: '家計簿をつける', desc: '', tags: ['お金', 'タスク'], hurdle: 2, time: 1, pt: 2 },
+        { id: 40, title: '請求書を確認する', desc: '', tags: ['お金', 'タスク'], hurdle: 2, time: 1, pt: 2 },
+        { id: 41, title: 'お風呂の掃除', desc: '', tags: ['家事', '掃除'], hurdle: 3, time: 2, pt: 6 },
+        { id: 42, title: '洗面台を掃除する', desc: '', tags: ['家事', '掃除', '衛生'], hurdle: 2, time: 1, pt: 2 },
+        { id: 43, title: 'ベッドメイキング', desc: '', tags: ['家事', '朝'], hurdle: 1, time: 1, pt: 1 },
+        { id: 44, title: '靴を磨く', desc: '', tags: ['衛生', '準備'], hurdle: 2, time: 1, pt: 2 },
+        { id: 45, title: '爪を切る', desc: '', tags: ['衛生', 'セルフケア'], hurdle: 1, time: 1, pt: 1 },
+        { id: 46, title: '植物に水をやる', desc: '', tags: ['家事'], hurdle: 1, time: 1, pt: 1 },
+        { id: 47, title: '5分だけ作業を始める', desc: 'とにかく始める', tags: ['習慣', 'タスク'], hurdle: 2, time: 1, pt: 2 },
+        { id: 48, title: 'クローゼットを整理する', desc: '', tags: ['家事', '掃除'], hurdle: 3, time: 3, pt: 9 },
+        { id: 49, title: 'スマホを別の部屋に置く', desc: '1時間', tags: ['習慣', 'メンタル'], hurdle: 3, time: 3, pt: 9 },
+        { id: 50, title: '今日の振り返りをする', desc: '', tags: ['振り返り', '夜', 'メンタル'], hurdle: 2, time: 1, pt: 2 },
+      ],
+      rewards: [
+        { id: 51, title: 'YouTube動画を見る', desc: '30分まで', tags: ['動画', 'スマホ'], satisfaction: 2, time: 2, price: 1, pt: 4 },
+        { id: 52, title: 'ゲームをする', desc: '', tags: ['ゲーム'], satisfaction: 3, time: 3, price: 1, pt: 9 },
+        { id: 53, title: 'コンビニスイーツ', desc: '', tags: ['食べ物', 'お出かけ'], satisfaction: 2, time: 1, price: 2, pt: 4 },
+        { id: 54, title: 'Netflix を1話見る', desc: '', tags: ['動画', '映像'], satisfaction: 2, time: 3, price: 1, pt: 6 },
+        { id: 55, title: '昼寝をする', desc: '30分', tags: ['休息'], satisfaction: 2, time: 2, price: 1, pt: 4 },
+        { id: 56, title: 'お気に入りの音楽を聴く', desc: '', tags: ['音楽', '休息'], satisfaction: 1, time: 2, price: 1, pt: 2 },
+        { id: 57, title: 'カフェに行く', desc: '', tags: ['お出かけ', 'まったり'], satisfaction: 2, time: 3, price: 2, pt: 12 },
+        { id: 58, title: 'マンガを読む', desc: '1巻', tags: ['読み物', 'まったり'], satisfaction: 2, time: 2, price: 2, pt: 8 },
+        { id: 59, title: 'お菓子を食べる', desc: '', tags: ['食べ物'], satisfaction: 1, time: 1, price: 1, pt: 1 },
+        { id: 60, title: 'SNSをだらだら見る', desc: '30分', tags: ['スマホ'], satisfaction: 1, time: 2, price: 1, pt: 2 },
+        { id: 61, title: 'ゆっくりお風呂に入る', desc: '湯船に浸かる', tags: ['休息', 'セルフケア'], satisfaction: 3, time: 2, price: 1, pt: 6 },
+        { id: 62, title: '好きな映画を見る', desc: '', tags: ['動画', '映像', 'まったり'], satisfaction: 3, time: 4, price: 1, pt: 12 },
+        { id: 63, title: 'ドライブに行く', desc: '', tags: ['お出かけ', '外出'], satisfaction: 3, time: 4, price: 3, pt: 36 },
+        { id: 64, title: '外食する', desc: '', tags: ['食べ物', 'お出かけ'], satisfaction: 3, time: 3, price: 3, pt: 27 },
+        { id: 65, title: 'コンビニに寄る', desc: '好きなもの1つ', tags: ['食べ物', 'お出かけ'], satisfaction: 1, time: 1, price: 1, pt: 1 },
+        { id: 66, title: '本を買う', desc: '', tags: ['買い物', '読み物'], satisfaction: 2, time: 1, price: 2, pt: 4 },
+        { id: 67, title: 'ゲームを1時間する', desc: '', tags: ['ゲーム'], satisfaction: 3, time: 4, price: 1, pt: 12 },
+        { id: 68, title: 'スマホゲームをする', desc: '15分', tags: ['ゲーム', 'スマホ'], satisfaction: 1, time: 1, price: 1, pt: 1 },
+        { id: 69, title: 'アニメを1話見る', desc: '', tags: ['動画', '映像'], satisfaction: 2, time: 2, price: 1, pt: 4 },
+        { id: 70, title: 'Twitterを見る', desc: '15分', tags: ['スマホ'], satisfaction: 1, time: 1, price: 1, pt: 1 },
+        { id: 71, title: '好きなポッドキャストを聴く', desc: '', tags: ['音楽', '学習'], satisfaction: 2, time: 3, price: 1, pt: 6 },
+        { id: 72, title: '温泉・銭湯に行く', desc: '', tags: ['お出かけ', 'セルフケア'], satisfaction: 3, time: 4, price: 2, pt: 24 },
+        { id: 73, title: 'ショッピングに行く', desc: '', tags: ['買い物', 'お出かけ'], satisfaction: 3, time: 4, price: 4, pt: 48 },
+        { id: 74, title: 'ランチを奮発する', desc: '', tags: ['食べ物', 'お出かけ'], satisfaction: 2, time: 2, price: 3, pt: 12 },
+        { id: 75, title: 'デザートを食べる', desc: '', tags: ['食べ物'], satisfaction: 2, time: 1, price: 2, pt: 4 },
+        { id: 76, title: '好きなゲームを買う', desc: '', tags: ['ゲーム', '買い物'], satisfaction: 3, time: 1, price: 4, pt: 12 },
+        { id: 77, title: 'オンラインショッピング', desc: '1000円以内', tags: ['買い物'], satisfaction: 2, time: 2, price: 2, pt: 8 },
+        { id: 78, title: '友達と遊ぶ', desc: '', tags: ['人間関係', 'お出かけ'], satisfaction: 3, time: 5, price: 3, pt: 45 },
+        { id: 79, title: 'ゆっくり読書する', desc: '好きな本', tags: ['読み物', 'まったり'], satisfaction: 2, time: 3, price: 1, pt: 6 },
+        { id: 80, title: 'お気に入りのカフェでPC作業', desc: '', tags: ['お出かけ', 'まったり'], satisfaction: 2, time: 4, price: 2, pt: 16 },
+        { id: 81, title: '公園でぼーっとする', desc: '', tags: ['外出', '休息'], satisfaction: 2, time: 2, price: 1, pt: 4 },
+        { id: 82, title: '好きなYouTuberを見る', desc: '1本', tags: ['動画', 'スマホ'], satisfaction: 2, time: 2, price: 1, pt: 4 },
+        { id: 83, title: 'ゲーム実況を見る', desc: '', tags: ['動画', 'ゲーム'], satisfaction: 1, time: 2, price: 1, pt: 2 },
+        { id: 84, title: '好きなアーティストの曲を聴く', desc: 'アルバム1枚', tags: ['音楽'], satisfaction: 2, time: 3, price: 1, pt: 6 },
+        { id: 85, title: 'カラオケに行く', desc: '', tags: ['音楽', 'お出かけ'], satisfaction: 3, time: 4, price: 3, pt: 36 },
+        { id: 86, title: 'ボードゲームをする', desc: '', tags: ['ゲーム', '人間関係'], satisfaction: 3, time: 4, price: 2, pt: 24 },
+        { id: 87, title: 'マッサージを受ける', desc: '', tags: ['セルフケア', 'お出かけ'], satisfaction: 3, time: 3, price: 4, pt: 36 },
+        { id: 88, title: '好きな服を買う', desc: '', tags: ['買い物', 'お出かけ'], satisfaction: 3, time: 3, price: 5, pt: 45 },
+        { id: 89, title: 'ゲームの課金', desc: '500円分', tags: ['ゲーム', '買い物'], satisfaction: 2, time: 1, price: 2, pt: 4 },
+        { id: 90, title: 'タピオカを飲む', desc: '', tags: ['食べ物', 'お出かけ'], satisfaction: 1, time: 1, price: 2, pt: 2 },
+        { id: 91, title: 'スイーツ巡りをする', desc: '', tags: ['食べ物', 'お出かけ'], satisfaction: 3, time: 4, price: 3, pt: 36 },
+        { id: 92, title: '旅行の計画を立てる', desc: '', tags: ['まったり', '準備'], satisfaction: 2, time: 3, price: 1, pt: 6 },
+        { id: 93, title: '日帰り旅行', desc: '', tags: ['お出かけ', '外出'], satisfaction: 3, time: 6, price: 4, pt: 72 },
+        { id: 94, title: '好きな動画を倍速なしで見る', desc: '', tags: ['動画', 'まったり'], satisfaction: 2, time: 3, price: 1, pt: 6 },
+        { id: 95, title: 'ゆっくり料理する', desc: '好きなもの', tags: ['食べ物', 'まったり'], satisfaction: 2, time: 3, price: 2, pt: 12 },
+        { id: 96, title: 'パフェを食べる', desc: '', tags: ['食べ物', 'お出かけ'], satisfaction: 3, time: 1, price: 2, pt: 6 },
+        { id: 97, title: 'ゲームを思う存分する', desc: '3時間', tags: ['ゲーム'], satisfaction: 3, time: 5, price: 1, pt: 15 },
+        { id: 98, title: 'サウナに行く', desc: '', tags: ['セルフケア', 'お出かけ'], satisfaction: 3, time: 3, price: 3, pt: 27 },
+        { id: 99, title: 'ネットサーフィンする', desc: '30分', tags: ['スマホ', 'まったり'], satisfaction: 1, time: 2, price: 1, pt: 2 },
+        { id: 100, title: '好きな人と電話する', desc: '', tags: ['人間関係'], satisfaction: 3, time: 3, price: 1, pt: 9 },
+      ],
+      doneActions: [
+        { id: 1, title: '食器を片付ける', pt: 1, count: 3 },
+        { id: 2, title: '風呂に入る', pt: 4, count: 1 },
+      ],
+      doneRewards: [],
+      nextId: 101,
+      formVals: { hurdle: 1, time: 1, satisfaction: 1, rewardTime: 1, price: 1 },
+      activeFilterTags: { action: [], reward: [] },  // タブ別フィルタータグ
+      searchQuery: { action: '', reward: '' },        // タブ別検索ワード
+      sortOrder: { action: 'default', reward: 'default' }, // タブ別ソート順（default/pt-desc/pt-asc）
+    };
+
+    const modes = {
+      easy: { earnMul: 1.5, spendMul: 0.7, label: 'イージーモード' },
+      normal: { earnMul: 1.0, spendMul: 1.0, label: 'ノーマルモード' },
+      hard: { earnMul: 0.8, spendMul: 1.5, label: 'ハードモード' },
+    };
+
+    function calcActionPt(hurdle, time) {
+      return Math.max(1, Math.round(hurdle * time * modes[state.mode].earnMul));
+    }
+    function calcRewardPt(satisfaction, time, price) {
+      return Math.max(1, Math.round(satisfaction * time * price * modes[state.mode].spendMul));
+    }
+
+    function render() {
+      document.getElementById('pointNum').textContent = state.points;
+      document.getElementById('modeLabel').textContent = modes[state.mode].label;
+
+      // 今日の獲得・消費集計
+      const earned = state.doneActions.reduce((sum, d) => sum + d.pt * d.count, 0);
+      const spent = state.doneRewards.reduce((sum, d) => sum + d.pt * d.count, 0);
+      document.getElementById('todayEarned').innerHTML = `+${earned}<span class="text-sm font-bold ml-0.5">pt</span>`;
+      document.getElementById('todaySpent').innerHTML = `-${spent}<span class="text-sm font-bold ml-0.5">pt</span>`;
+      document.getElementById('doneEarnedBadge').textContent = earned > 0 ? `+${earned}pt` : '';
+      document.getElementById('doneSpentBadge').textContent = spent > 0 ? `-${spent}pt` : '';
+
+      renderActionList();
+      renderRewardList();
+      renderDoneList();
+      renderRewardDoneList();
+      renderFilterChips();
+      updateSearchSortUI();
+    }
+
+    function renderActionList() {
+      const el = document.getElementById('actionList');
+      const tab = 'action';
+      const activeFilters = state.activeFilterTags.action;
+      const query = state.searchQuery.action.trim().toLowerCase();
+      const sort = state.sortOrder.action;
+
+      let items = state.actions;
+      if (activeFilters.length) items = items.filter(a => activeFilters.every(t => (a.tags || []).includes(t)));
+      if (query) items = items.filter(a => a.title.toLowerCase().includes(query) || (a.desc || '').toLowerCase().includes(query) || (a.tags || []).some(t => t.toLowerCase().includes(query)));
+      if (sort === 'pt-desc') items = [...items].sort((a, b) => calcActionPt(b.hurdle, b.time) - calcActionPt(a.hurdle, a.time));
+      if (sort === 'pt-asc') items = [...items].sort((a, b) => calcActionPt(a.hurdle, a.time) - calcActionPt(b.hurdle, b.time));
+
+      const totalFiltered = activeFilters.length || query;
+      const countText = totalFiltered ? ` (${items.length}/${state.actions.length}件)` : '';
+      let html = `<p class="section-title">タップしてポイント獲得${countText}</p>`;
+      if (!items.length) {
+        html += '<p style="color:var(--muted);font-size:0.9rem;text-align:center;padding:20px 0;">まだ行動がありません<br>＋ボタンで追加しましょう</p>';
+      }
+      items.forEach(a => {
+        const pt = calcActionPt(a.hurdle, a.time);
+        html += `
+    <div class="action-card mb-3 group" onclick="completeAction(${a.id}, event)">
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm truncate">${a.title}</div>
+        ${a.desc ? `<div class="text-xs mt-0.5 truncate" style="color:var(--muted)">${a.desc}</div>` : ''}
+        ${a.tags && a.tags.length ? `<div class="flex flex-wrap gap-1 mt-1">${a.tags.map(t => `<span style="font-size:0.7rem;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(255,107,53,0.15);color:var(--accent)">${t}</span>`).join('')}</div>` : ''}
+      </div>
+      <span class="pt-badge">+${pt}pt</span>
+      <button onclick="event.stopPropagation();openModal('action',${a.id})" 
+        class="transition-opacity"
+        style="background:var(--surface2);border:none;color:var(--muted);border-radius:8px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;">✎</button>
+    </div>`;
+      });
+      el.innerHTML = html;
+    }
+
+    function renderRewardList() {
+      const el = document.getElementById('rewardList');
+      const activeFilters = state.activeFilterTags.reward;
+      const query = state.searchQuery.reward.trim().toLowerCase();
+      const sort = state.sortOrder.reward;
+
+      let items = state.rewards;
+      if (activeFilters.length) items = items.filter(r => activeFilters.every(t => (r.tags || []).includes(t)));
+      if (query) items = items.filter(r => r.title.toLowerCase().includes(query) || (r.desc || '').toLowerCase().includes(query) || (r.tags || []).some(t => t.toLowerCase().includes(query)));
+      if (sort === 'pt-desc') items = [...items].sort((a, b) => calcRewardPt(b.satisfaction, b.time, b.price) - calcRewardPt(a.satisfaction, a.time, a.price));
+      if (sort === 'pt-asc') items = [...items].sort((a, b) => calcRewardPt(a.satisfaction, a.time, a.price) - calcRewardPt(b.satisfaction, b.time, b.price));
+
+      const totalFiltered = activeFilters.length || query;
+      const countText = totalFiltered ? ` (${items.length}/${state.rewards.length}件)` : '';
+      let html = `<p class="section-title">タップしてポイント消費${countText}</p>`;
+      if (!items.length) {
+        html += '<p style="color:var(--muted);font-size:0.9rem;text-align:center;padding:20px 0;">まだご褒美がありません<br>＋ボタンで追加しましょう</p>';
+      }
+      items.forEach(r => {
+        const pt = calcRewardPt(r.satisfaction, r.time, r.price);
+        const canAfford = state.points >= pt;
+        html += `
+    <div class="action-card reward-card mb-3 group ${!canAfford ? 'opacity-40' : ''}" 
+         onclick="${canAfford ? `completeReward(${r.id}, event)` : 'showNoPoints()'}">
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm truncate">${r.title}</div>
+        ${r.desc ? `<div class="text-xs mt-0.5 truncate" style="color:var(--muted)">${r.desc}</div>` : ''}
+        ${r.tags && r.tags.length ? `<div class="flex flex-wrap gap-1 mt-1">${r.tags.map(t => `<span style="font-size:0.7rem;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(6,214,160,0.15);color:var(--reward)">${t}</span>`).join('')}</div>` : ''}
+      </div>
+      <span class="pt-badge reward">-${pt}pt</span>
+      <button onclick="event.stopPropagation();openModal('reward',${r.id})"
+        class="transition-opacity"
+        style="background:var(--surface2);border:none;color:var(--muted);border-radius:8px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;">✎</button>
+    </div>`;
+      });
+      el.innerHTML = html;
+    }
+
+    function renderDoneList() {
+      const el = document.getElementById('doneList');
+      if (!state.doneOpen) { el.innerHTML = ''; return; }
+      if (!state.doneActions.length) {
+        el.innerHTML = '<div class="done-item" style="color:var(--muted);font-size:0.85rem;">まだ記録なし</div>';
+        return;
+      }
+      let html = '';
+      state.doneActions.forEach((d, i) => {
+        html += `
+    <div class="done-item">
+      <div>
+        <span class="font-bold text-sm">${d.title}</span>
+        <span class="text-xs ml-2" style="color:var(--accent)">+${d.pt * d.count}pt</span>
+      </div>
+      <div class="count-ctrl">
+        <button class="count-btn" onclick="adjustDone(${i}, -1)">−</button>
+        <span class="count-num">${d.count}</span>
+        <button class="count-btn" onclick="adjustDone(${i}, 1)">＋</button>
+      </div>
+    </div>`;
+      });
+      el.innerHTML = html;
+    }
+
+    function renderRewardDoneList() {
+      const el = document.getElementById('rewardDoneList');
+      if (!state.rewardDoneOpen) { el.innerHTML = ''; return; }
+      if (!state.doneRewards.length) {
+        el.innerHTML = '<div class="done-item" style="color:var(--muted);font-size:0.85rem;">まだ記録なし</div>';
+        return;
+      }
+      let html = '';
+      state.doneRewards.forEach((d, i) => {
+        html += `
+    <div class="done-item">
+      <div>
+        <span class="font-bold text-sm">${d.title}</span>
+        <span class="text-xs ml-2" style="color:var(--reward)">-${d.pt * d.count}pt</span>
+      </div>
+      <div class="count-ctrl">
+        <button class="count-btn" onclick="adjustRewardDone(${i}, -1)">−</button>
+        <span class="count-num">${d.count}</span>
+        <button class="count-btn" onclick="adjustRewardDone(${i}, 1)">＋</button>
+      </div>
+    </div>`;
+      });
+      el.innerHTML = html;
+    }
+
+    function toggleDone() {
+      state.doneOpen = !state.doneOpen;
+      document.getElementById('doneChevron').classList.toggle('open', state.doneOpen);
+      renderDoneList();
+    }
+    function toggleRewardDone() {
+      state.rewardDoneOpen = !state.rewardDoneOpen;
+      document.getElementById('rewardDoneChevron').classList.toggle('open', state.rewardDoneOpen);
+      renderRewardDoneList();
+    }
+
+    function adjustDone(idx, delta) {
+      const d = state.doneActions[idx];
+      const ptDiff = d.pt * delta;
+      d.count += delta;
+      state.points += ptDiff;  // adjust points to match edit
+      if (d.count <= 0) state.doneActions.splice(idx, 1);
+      render();
+    }
+    function adjustRewardDone(idx, delta) {
+      const d = state.doneRewards[idx];
+      const ptDiff = d.pt * delta;
+      d.count += delta;
+      state.points -= ptDiff;
+      if (d.count <= 0) state.doneRewards.splice(idx, 1);
+      render();
+    }
+
+    function completeAction(id, event) {
+      const action = state.actions.find(a => a.id === id);
+      if (!action) return;
+      const pt = calcActionPt(action.hurdle, action.time);
+      state.points += pt;
+      // Add to done
+      const existing = state.doneActions.find(d => d.id === id);
+      if (existing) existing.count++;
+      else state.doneActions.push({ id, title: action.title, pt, count: 1 });
+      // Flash animation
+      const display = document.getElementById('pointDisplay');
+      display.classList.remove('flash');
+      void display.offsetWidth;
+      display.classList.add('flash');
+      // Float up
+      showFloat(event, `+${pt}pt`, '#ffd166');
+      render();
+    }
+
+    function completeReward(id, event) {
+      const reward = state.rewards.find(r => r.id === id);
+      if (!reward) return;
+      const pt = calcRewardPt(reward.satisfaction, reward.time, reward.price);
+      state.points -= pt;
+      const existing = state.doneRewards.find(d => d.id === id);
+      if (existing) existing.count++;
+      else state.doneRewards.push({ id, title: reward.title, pt, count: 1 });
+      showFloat(event, `-${pt}pt`, '#06d6a0');
+      render();
+    }
+
+    function showNoPoints() {
+      showFloatText('ポイント不足！', '#ff5050', window.innerWidth / 2, window.innerHeight / 2);
+    }
+
+    function showFloat(event, text, color) {
+      const x = event ? event.clientX : window.innerWidth / 2;
+      const y = event ? event.clientY : window.innerHeight / 2;
+      showFloatText(text, color, x, y);
+    }
+
+    function showFloatText(text, color, x, y) {
+      const el = document.createElement('div');
+      el.className = 'float-pt';
+      el.style.color = color;
+      el.style.left = (x - 20) + 'px';
+      el.style.top = (y - 10) + 'px';
+      el.textContent = text;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1000);
+    }
+
+    function switchTab(tab) {
+      state.currentTab = tab;
+      document.getElementById('actionList').classList.toggle('hidden', tab !== 'action');
+      document.getElementById('rewardList').classList.toggle('hidden', tab !== 'reward');
+      document.getElementById('tabAction').className = 'tab-btn' + (tab === 'action' ? ' active-action' : '');
+      document.getElementById('tabReward').className = 'tab-btn' + (tab === 'reward' ? ' active-reward' : '');
+      render();
+    }
+
+    function changeMode(val) {
+      state.mode = val;
+      render();
+    }
+
+    // --- Modal ---
+    let formVals = { hurdle: 1, time: 1, satisfaction: 1, rewardTime: 1, price: 1 };
+    let currentTags = [];
+
+    function handleTagInput(e) {
+      if (e.key === 'Enter') { e.preventDefault(); addTagFromInput(); }
+    }
+
+    function addTagFromInput() {
+      const input = document.getElementById('formTagInput');
+      const val = input.value.trim();
+      if (!val || currentTags.includes(val)) { input.value = ''; return; }
+      currentTags.push(val);
+      input.value = '';
+      renderTagList();
+    }
+
+    function removeTag(tag) {
+      currentTags = currentTags.filter(t => t !== tag);
+      renderTagList();
+      renderExistingTagSuggest();
+    }
+
+    function renderExistingTagSuggest() {
+      const el = document.getElementById('existingTagSuggest');
+      if (!el) return;
+      const input = document.getElementById('formTagInput').value.toLowerCase();
+      // 現在のモーダルタイプに応じた全タグを取得
+      const items = state.modalType === 'action' ? state.actions : state.rewards;
+      const allTags = [...new Set(items.flatMap(i => i.tags || []))].sort();
+      const filtered = input ? allTags.filter(t => t.toLowerCase().includes(input)) : allTags;
+      const isAction = state.modalType === 'action';
+      el.innerHTML = filtered.map(tag => {
+        const selected = currentTags.includes(tag);
+        const color = isAction ? 'var(--accent)' : 'var(--reward)';
+        const bg = isAction ? 'rgba(255,107,53,0.15)' : 'rgba(6,214,160,0.15)';
+        return `<button type="button" onclick="toggleExistingTag('${tag}')"
+      style="font-size:0.78rem;font-weight:700;padding:4px 12px;border-radius:20px;cursor:pointer;transition:all 0.15s;
+             border:1.5px solid ${selected ? color : 'var(--surface2)'};
+             background:${selected ? bg : 'transparent'};
+             color:${selected ? color : 'var(--muted)'};">${tag}${selected ? ' ✕' : ' +'}</button>`;
+      }).join('');
+    }
+
+    function toggleExistingTag(tag) {
+      if (currentTags.includes(tag)) {
+        currentTags = currentTags.filter(t => t !== tag);
+      } else {
+        currentTags.push(tag);
+      }
+      renderTagList();
+      renderExistingTagSuggest();
+    }
+
+    function renderTagList() {
+      const el = document.getElementById('formTagList');
+      if (!el) return;
+      if (!currentTags.length) { el.innerHTML = ''; return; }
+      const isAction = state.modalType === 'action';
+      const color = isAction ? 'var(--accent)' : 'var(--reward)';
+      const bg = isAction ? 'rgba(255,107,53,0.15)' : 'rgba(6,214,160,0.15)';
+      el.innerHTML = `<p style="font-size:0.75rem;color:var(--muted);width:100%;margin-bottom:4px;">設定済みタグ</p>` +
+        currentTags.map(tag => `
+    <span style="display:inline-flex;align-items:center;gap:5px;background:${bg};border:1.5px solid ${color};border-radius:20px;padding:4px 10px;font-size:0.8rem;font-weight:700;color:${color};">
+      ${tag}
+      <button onclick="removeTag('${tag}')" style="background:none;border:none;color:${color};cursor:pointer;font-size:0.85rem;padding:0;line-height:1;display:flex;align-items:center;opacity:0.7;">✕</button>
+    </span>
+  `).join('');
+    }
+    let modalMode = 'add'; // 'add' | 'edit'
+
+    function openModal(type, id = null) {
+      state.editingId = id;
+      state.modalType = type;
+      document.getElementById('modalOverlay').classList.remove('hidden');
+      document.body.classList.add('modal-open');
+      document.getElementById('typeSwitcher').classList.toggle('hidden', id !== null);
+
+      if (id !== null) {
+        // Edit mode
+        modalMode = 'edit';
+        document.getElementById('modalTitle').textContent = type === 'action' ? '行動を編集' : 'ご褒美を編集';
+        document.getElementById('saveBtn').textContent = '保存する';
+        document.getElementById('deleteItemBtn').classList.remove('hidden');
+
+        if (type === 'action') {
+          const item = state.actions.find(a => a.id === id);
+          document.getElementById('formTitle').value = item.title;
+          document.getElementById('formDesc').value = item.desc;
+          formVals.hurdle = item.hurdle;
+          formVals.time = item.time;
+          currentTags = item.tags ? [...item.tags] : [];
+        } else {
+          const item = state.rewards.find(r => r.id === id);
+          document.getElementById('formTitle').value = item.title;
+          document.getElementById('formDesc').value = item.desc;
+          formVals.satisfaction = item.satisfaction;
+          formVals.rewardTime = item.time;
+          formVals.price = item.price;
+          currentTags = item.tags ? [...item.tags] : [];
+        }
+        renderTagList();
+        renderExistingTagSuggest();
+      } else {
+        modalMode = 'add';
+        document.getElementById('modalTitle').textContent = type === 'action' ? '行動を追加' : 'ご褒美を追加';
+        document.getElementById('saveBtn').textContent = '追加する';
+        document.getElementById('deleteItemBtn').classList.add('hidden');
+        document.getElementById('formTitle').value = '';
+        document.getElementById('formDesc').value = '';
+        formVals = { hurdle: 1, time: 1, satisfaction: 1, rewardTime: 1, price: 1 };
+        currentTags = [];
+        document.getElementById('formTagInput').value = '';
+        renderExistingTagSuggest();
+      }
+
+      switchModalType(type);
+      updateModalModeBadge();
+    }
+
+    function switchModalType(type) {
+      state.modalType = type;
+      document.getElementById('actionFields').classList.toggle('hidden', type !== 'action');
+      document.getElementById('rewardFields').classList.toggle('hidden', type !== 'reward');
+      document.getElementById('typeActionBtn').className = 'tab-btn' + (type === 'action' ? ' active-action' : '');
+      document.getElementById('typeRewardBtn').className = 'tab-btn' + (type === 'reward' ? ' active-reward' : '');
+
+      const preview = document.getElementById('ptPreview');
+      preview.className = type === 'action' ? 'pt-preview' : 'pt-preview reward-preview';
+      const previewLabel = preview.querySelector('span').nextSibling;
+      document.getElementById('ptPreviewLabel').textContent = type === 'action' ? ' pt 獲得' : ' pt 消費';
+
+      refreshOptionUI();
+      updatePreview();
+      updateModalModeBadge();
+      renderTagList();
+      renderExistingTagSuggest();
+    }
+
+    function refreshOptionUI() {
+      const type = state.modalType;
+      // Reset all to unselected
+      ['hurdleOptions', 'timeOptions', 'satisfactionOptions', 'rewardTimeOptions', 'priceOptions'].forEach(gid => {
+        document.querySelectorAll(`#${gid} .option-btn`).forEach(b => {
+          b.className = 'option-btn';
+        });
+      });
+      // Select current
+      const sel = type === 'action' ? 'selected-action' : 'selected-reward';
+      if (type === 'action') {
+        selectOptionByVal('hurdleOptions', formVals.hurdle, sel);
+        selectOptionByVal('timeOptions', formVals.time, sel);
+      } else {
+        selectOptionByVal('satisfactionOptions', formVals.satisfaction, sel);
+        selectOptionByVal('rewardTimeOptions', formVals.rewardTime, sel);
+        selectOptionByVal('priceOptions', formVals.price, sel);
+      }
+    }
+
+    function selectOptionByVal(gid, val, cls) {
+      document.querySelectorAll(`#${gid} .option-btn`).forEach(b => {
+        if (parseInt(b.dataset.val) === val) b.classList.add(cls);
+      });
+    }
+
+    function selectOption(key, btn) {
+      const type = state.modalType;
+      const sel = type === 'action' ? 'selected-action' : 'selected-reward';
+      const groupMap = {
+        hurdle: 'hurdleOptions', time: 'timeOptions',
+        satisfaction: 'satisfactionOptions', rewardTime: 'rewardTimeOptions', price: 'priceOptions'
+      };
+      const gid = groupMap[key];
+      document.querySelectorAll(`#${gid} .option-btn`).forEach(b => b.className = 'option-btn');
+      btn.classList.add(sel);
+      formVals[key] = parseInt(btn.dataset.val);
+      updatePreview();
+    }
+
+    function updatePreview() {
+      let pt;
+      if (state.modalType === 'action') {
+        pt = calcActionPt(formVals.hurdle, formVals.time);
+      } else {
+        pt = calcRewardPt(formVals.satisfaction, formVals.rewardTime, formVals.price);
+      }
+      document.getElementById('ptPreviewNum').textContent = pt;
+    }
+
+    function saveItem() {
+      const title = document.getElementById('formTitle').value.trim();
+      if (!title) { document.getElementById('formTitle').focus(); return; }
+      const desc = document.getElementById('formDesc').value.trim();
+      const tags = [...currentTags];
+
+      if (state.modalType === 'action') {
+        const pt = calcActionPt(formVals.hurdle, formVals.time);
+        if (modalMode === 'edit') {
+          const item = state.actions.find(a => a.id === state.editingId);
+          Object.assign(item, { title, desc, tags, hurdle: formVals.hurdle, time: formVals.time, pt });
+        } else {
+          state.actions.push({ id: state.nextId++, title, desc, tags, hurdle: formVals.hurdle, time: formVals.time, pt });
+        }
+      } else {
+        const pt = calcRewardPt(formVals.satisfaction, formVals.rewardTime, formVals.price);
+        if (modalMode === 'edit') {
+          const item = state.rewards.find(r => r.id === state.editingId);
+          Object.assign(item, { title, desc, tags, satisfaction: formVals.satisfaction, time: formVals.rewardTime, price: formVals.price, pt });
+        } else {
+          state.rewards.push({ id: state.nextId++, title, desc, tags, satisfaction: formVals.satisfaction, time: formVals.rewardTime, price: formVals.price, pt });
+        }
+      }
+      closeModal();
+      render();
+    }
+
+    function deleteItem() {
+      if (!confirm('本当に削除しますか？')) return;
+      if (state.modalType === 'action') {
+        state.actions = state.actions.filter(a => a.id !== state.editingId);
+      } else {
+        state.rewards = state.rewards.filter(r => r.id !== state.editingId);
+      }
+      closeModal();
+      render();
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.add('hidden');
+      document.body.classList.remove('modal-open');
+    }
+    function closeModalOnBg(e) {
+      if (e.target === document.getElementById('modalOverlay')) closeModal();
+    }
+
+    function onSearchInput(val) {
+      state.searchQuery[state.currentTab] = val;
+      render();
+    }
+
+    const sortLabels = {
+      'default': '↕ 並び替え',
+      'pt-desc': '↓ pt 高い順',
+      'pt-asc': '↑ pt 低い順',
+    };
+
+    function cycleSortOrder() {
+      const tab = state.currentTab;
+      const cycle = ['default', 'pt-desc', 'pt-asc'];
+      const cur = cycle.indexOf(state.sortOrder[tab]);
+      state.sortOrder[tab] = cycle[(cur + 1) % cycle.length];
+      render();
+    }
+
+    function updateSearchSortUI() {
+      const tab = state.currentTab;
+      // 検索バーの値を同期
+      const input = document.getElementById('searchInput');
+      if (input) input.value = state.searchQuery[tab];
+      // ソートボタンのラベル・色を同期
+      const btn = document.getElementById('sortBtn');
+      if (!btn) return;
+      const sort = state.sortOrder[tab];
+      const isActive = sort !== 'default';
+      const isAction = tab === 'action';
+      const activeColor = isAction ? 'var(--accent)' : 'var(--reward)';
+      btn.textContent = sortLabels[sort];
+      btn.style.borderColor = isActive ? activeColor : 'var(--surface2)';
+      btn.style.color = isActive ? activeColor : 'var(--muted)';
+      btn.style.background = isActive ? (isAction ? 'rgba(255,107,53,0.1)' : 'rgba(6,214,160,0.1)') : 'transparent';
+    }
+
+
+    function getAllTags() {
+      const tab = state.currentTab;
+      const items = tab === 'action' ? state.actions : state.rewards;
+      const tagSet = new Set();
+      items.forEach(item => (item.tags || []).forEach(t => tagSet.add(t)));
+      return [...tagSet].sort();
+    }
+
+    function renderFilterChips() {
+      const el = document.getElementById('filterTagChips');
+      if (!el) return;
+      const tab = state.currentTab;
+      const tags = getAllTags();
+      if (!tags.length) { el.innerHTML = ''; return; }
+      const isAction = tab === 'action';
+      const activeColor = isAction ? 'var(--accent)' : 'var(--reward)';
+      const activeBg = isAction ? 'rgba(255,107,53,0.2)' : 'rgba(6,214,160,0.2)';
+      const activeFilters = state.activeFilterTags[tab];
+      el.innerHTML = tags.map(tag => {
+        const active = activeFilters.includes(tag);
+        return `<button onclick="toggleFilterTag('${tag}')"
+      style="font-size:0.78rem;font-weight:700;padding:4px 12px;border-radius:20px;cursor:pointer;transition:all 0.15s;
+             border: 1.5px solid ${active ? activeColor : 'var(--surface2)'};
+             background: ${active ? activeBg : 'transparent'};
+             color: ${active ? activeColor : 'var(--muted)'};">${tag}</button>`;
+      }).join('');
+    }
+
+    function toggleFilterTag(tag) {
+      const tab = state.currentTab;
+      const filters = state.activeFilterTags[tab];
+      const idx = filters.indexOf(tag);
+      if (idx >= 0) filters.splice(idx, 1);
+      else filters.push(tag);
+      render();
+    }
+    function toggleModeTooltip() {
+      const t = document.getElementById('modeTooltip');
+      t.classList.toggle('hidden');
+    }
+    // クリックアウトで閉じる
+    document.addEventListener('click', function (e) {
+      if (!document.getElementById('modeHelpWrap').contains(e.target)) {
+        document.getElementById('modeTooltip').classList.add('hidden');
+      }
+    });
+
+    function updateModalModeBadge() {
+      const badge = document.getElementById('modalModeBadge');
+      const m = modes[state.mode];
+      const type = state.modalType;
+      const emoji = state.mode === 'easy' ? '🟢' : state.mode === 'hard' ? '🔴' : '🟡';
+      if (type === 'action') {
+        badge.textContent = `${emoji} 獲得 ×${m.earnMul}`;
+      } else {
+        badge.textContent = `${emoji} 消費 ×${m.spendMul}`;
+      }
+    }
+
+
+    // Init
+    render();
+    updatePreview();
+  </script>
+</body>
+
+</html>
