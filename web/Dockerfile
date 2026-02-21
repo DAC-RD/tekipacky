@@ -10,7 +10,7 @@ RUN npm ci
 FROM deps AS dev
 ENV NODE_ENV=development
 COPY . .
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npm install && npx prisma migrate deploy && npm run dev"]
 
 # ── 本番ビルド ────────────────────────────────────────
 FROM deps AS builder

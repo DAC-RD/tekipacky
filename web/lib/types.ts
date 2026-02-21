@@ -36,8 +36,6 @@ export interface AppState {
   rewards: Reward[];
   doneActions: DoneItem[];
   doneRewards: DoneItem[];
-  nextId: number;
-  lastDate: string; // JST date "YYYY-MM-DD"
 }
 
 export interface FloatItem {

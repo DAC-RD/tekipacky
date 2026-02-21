@@ -870,12 +870,10 @@ export const DEFAULT_REWARDS: Reward[] = [
 export const INITIAL_STATE: AppState = {
   points: 0,
   mode: "normal",
-  actions: DEFAULT_ACTIONS,
-  rewards: DEFAULT_REWARDS,
+  actions: [],
+  rewards: [],
   doneActions: [],
   doneRewards: [],
-  nextId: 101,
-  lastDate: "",
 };
 
 export const STORAGE_KEY = "tekipakky_state";

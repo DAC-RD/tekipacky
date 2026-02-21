@@ -4,14 +4,24 @@ import { useMemo, useRef, useState } from "react";
 import { useStore } from "@/hooks/useStore";
 import { FloatItem, Mode, SortOrder, Tab } from "@/lib/types";
 import { MODES } from "@/lib/constants";
-import { calcActionPt, calcRewardPt, upsertDoneItem } from "@/lib/utils";
+import { calcActionPt, calcRewardPt } from "@/lib/utils";
 import PointDisplay from "@/components/PointDisplay";
 import DoneAccordion from "@/components/DoneAccordion";
 import FilterArea from "@/components/FilterArea";
 import ItemModal, { ModalSaveData } from "@/components/ItemModal";
 
 export default function Dashboard() {
-  const { state, updateState } = useStore();
+  const {
+    state,
+    hydrated,
+    completeAction,
+    completeReward,
+    adjustDoneAction,
+    adjustDoneReward,
+    saveItem,
+    deleteItem,
+    changeMode,
+  } = useStore();
 
   // UI state (not persisted)
   const [currentTab, setCurrentTab] = useState<Tab>("action");
@@ -131,77 +141,34 @@ export default function Dashboard() {
   }
 
   // Actions
-  function handleCompleteAction(id: number, clientX: number, clientY: number) {
-    const action = state.actions.find((a) => a.id === id);
-    if (!action) return;
-    const pt = calcActionPt(action.hurdle, action.time, state.mode);
-    updateState((prev) => ({
-      ...prev,
-      points: prev.points + pt,
-      doneActions: upsertDoneItem(prev.doneActions, id, action.title, pt, 1),
-    }));
-    setFlashKey((k) => k + 1);
-    showFloat(clientX, clientY, `+${pt}pt`, "#ffd166");
+  async function handleCompleteAction(
+    id: number,
+    clientX: number,
+    clientY: number,
+  ) {
+    const pt = await completeAction(id);
+    if (pt > 0) {
+      setFlashKey((k) => k + 1);
+      showFloat(clientX, clientY, `+${pt}pt`, "#ffd166");
+    }
   }
 
-  function handleCompleteReward(id: number, clientX: number, clientY: number) {
-    const reward = state.rewards.find((r) => r.id === id);
-    if (!reward) return;
-    const pt = calcRewardPt(
-      reward.satisfaction,
-      reward.time,
-      reward.price,
-      state.mode,
-    );
-    if (state.points < pt) {
+  async function handleCompleteReward(
+    id: number,
+    clientX: number,
+    clientY: number,
+  ) {
+    const { pt, insufficient } = await completeReward(id);
+    if (insufficient) {
       showFloat(
         window.innerWidth / 2,
         window.innerHeight / 2,
         "ポイント不足！",
         "#ff5050",
       );
-      return;
+    } else {
+      showFloat(clientX, clientY, `-${pt}pt`, "#06d6a0");
     }
-    updateState((prev) => ({
-      ...prev,
-      points: prev.points - pt,
-      doneRewards: upsertDoneItem(prev.doneRewards, id, reward.title, pt, 1),
-    }));
-    showFloat(clientX, clientY, `-${pt}pt`, "#06d6a0");
-  }
-
-  function handleAdjustDoneAction(id: number, delta: number) {
-    const done = state.doneActions.find((d) => d.id === id);
-    if (!done) return;
-    const ptDiff = done.pt * delta;
-    updateState((prev) => ({
-      ...prev,
-      points: prev.points + ptDiff,
-      doneActions: upsertDoneItem(
-        prev.doneActions,
-        id,
-        done.title,
-        done.pt,
-        delta,
-      ),
-    }));
-  }
-
-  function handleAdjustDoneReward(id: number, delta: number) {
-    const done = state.doneRewards.find((d) => d.id === id);
-    if (!done) return;
-    const ptDiff = done.pt * delta;
-    updateState((prev) => ({
-      ...prev,
-      points: prev.points - ptDiff,
-      doneRewards: upsertDoneItem(
-        prev.doneRewards,
-        id,
-        done.title,
-        done.pt,
-        delta,
-      ),
-    }));
   }
 
   function openModal(type: Tab, editId: number | null = null) {
@@ -210,75 +177,14 @@ export default function Dashboard() {
     setModalOpen(true);
   }
 
-  function handleModalSave(data: ModalSaveData) {
-    updateState((prev) => {
-      if (data.type === "action") {
-        const item = {
-          id: data.id ?? prev.nextId,
-          title: data.title,
-          desc: data.desc,
-          tags: data.tags,
-          hurdle: data.hurdle ?? 1,
-          time: data.time ?? 1,
-        };
-        if (data.id !== null) {
-          return {
-            ...prev,
-            actions: prev.actions.map((a) => (a.id === data.id ? item : a)),
-          };
-        } else {
-          return {
-            ...prev,
-            actions: [...prev.actions, item],
-            nextId: prev.nextId + 1,
-          };
-        }
-      } else {
-        const item = {
-          id: data.id ?? prev.nextId,
-          title: data.title,
-          desc: data.desc,
-          tags: data.tags,
-          satisfaction: data.satisfaction ?? 1,
-          time: data.rewardTime ?? 1,
-          price: data.price ?? 1,
-        };
-        if (data.id !== null) {
-          return {
-            ...prev,
-            rewards: prev.rewards.map((r) => (r.id === data.id ? item : r)),
-          };
-        } else {
-          return {
-            ...prev,
-            rewards: [...prev.rewards, item],
-            nextId: prev.nextId + 1,
-          };
-        }
-      }
-    });
+  async function handleModalSave(data: ModalSaveData) {
+    await saveItem(data);
     setModalOpen(false);
   }
 
-  function handleModalDelete(type: Tab, id: number) {
-    updateState((prev) => {
-      if (type === "action") {
-        return {
-          ...prev,
-          actions: prev.actions.filter((a) => a.id !== id),
-        };
-      } else {
-        return {
-          ...prev,
-          rewards: prev.rewards.filter((r) => r.id !== id),
-        };
-      }
-    });
+  async function handleModalDelete(type: Tab, id: number) {
+    await deleteItem(type, id);
     setModalOpen(false);
-  }
-
-  function handleModeChange(newMode: Mode) {
-    updateState((prev) => ({ ...prev, mode: newMode }));
   }
 
   function toggleFilterTag(tab: Tab, tag: string) {
@@ -319,7 +225,7 @@ export default function Dashboard() {
           <div className="relative inline-flex items-center">
             <select
               value={state.mode}
-              onChange={(e) => handleModeChange(e.target.value as Mode)}
+              onChange={(e) => changeMode(e.target.value as Mode)}
               className="text-xs font-bold rounded-xl pl-3 pr-7 py-2 border-none outline-none cursor-pointer appearance-none"
               style={{ background: "var(--surface2)", color: "var(--text)" }}
             >
@@ -433,13 +339,13 @@ export default function Dashboard() {
         type="action"
         items={state.doneActions}
         totalPt={todayEarned}
-        onAdjust={handleAdjustDoneAction}
+        onAdjust={adjustDoneAction}
       />
       <DoneAccordion
         type="reward"
         items={state.doneRewards}
         totalPt={todaySpent}
-        onAdjust={handleAdjustDoneReward}
+        onAdjust={adjustDoneReward}
       />
 
       {/* Tab bar + FAB */}
@@ -495,7 +401,18 @@ export default function Dashboard() {
             {hasFilter &&
               ` (${filteredActions.length}/${state.actions.length}件)`}
           </p>
-          {filteredActions.length === 0 ? (
+          {!hydrated ? (
+            <p
+              style={{
+                color: "var(--muted)",
+                fontSize: "0.9rem",
+                textAlign: "center",
+                padding: "20px 0",
+              }}
+            >
+              読み込み中...
+            </p>
+          ) : filteredActions.length === 0 ? (
             <p
               style={{
                 color: "var(--muted)",
@@ -584,7 +501,18 @@ export default function Dashboard() {
             {hasFilter &&
               ` (${filteredRewards.length}/${state.rewards.length}件)`}
           </p>
-          {filteredRewards.length === 0 ? (
+          {!hydrated ? (
+            <p
+              style={{
+                color: "var(--muted)",
+                fontSize: "0.9rem",
+                textAlign: "center",
+                padding: "20px 0",
+              }}
+            >
+              読み込み中...
+            </p>
+          ) : filteredRewards.length === 0 ? (
             <p
               style={{
                 color: "var(--muted)",

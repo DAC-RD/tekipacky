@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose exec -T app sh -c \"cat /app/package.json | grep -E ''prisma|pg|adapter''\")"
+    ]
+  }
+}
