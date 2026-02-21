@@ -16,29 +16,22 @@ export default function DoneAccordion({
   totalPt,
   onAdjust,
 }: Props) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   const isAction = type === "action";
   const label = isAction ? "📋 今日の行動ログ" : "🎁 今日のご褒美ログ";
   const badgeColor = isAction ? "var(--accent2)" : "var(--reward)";
-  const badgeText = isAction
-    ? totalPt > 0
-      ? `+${totalPt}pt`
-      : ""
-    : totalPt > 0
-      ? `-${totalPt}pt`
-      : "";
+  const sign = isAction ? "+" : "-";
+  const badgeText = totalPt > 0 ? `${sign}${totalPt}pt` : "";
   const ptColor = isAction ? "var(--accent)" : "var(--reward)";
-  const ptSign = isAction ? "+" : "-";
 
   return (
     <div className="done-section mb-5">
-      <div
+      <button
+        type="button"
         className="done-header"
         onClick={() => setOpen((v) => !v)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === "Enter" && setOpen((v) => !v)}
+        aria-expanded={open}
       >
         <span>{label}</span>
         <div className="flex items-center gap-2">
@@ -47,7 +40,7 @@ export default function DoneAccordion({
           </span>
           <span className={`chevron ${open ? "open" : ""}`}>▼</span>
         </div>
-      </div>
+      </button>
 
       {open && (
         <div>
@@ -64,7 +57,7 @@ export default function DoneAccordion({
                 <div>
                   <span className="font-bold text-sm">{d.title}</span>
                   <span className="text-xs ml-2" style={{ color: ptColor }}>
-                    {ptSign}
+                    {sign}
                     {d.pt * d.count}pt
                   </span>
                 </div>

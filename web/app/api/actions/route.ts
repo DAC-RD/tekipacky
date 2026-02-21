@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getOrCreateUser, applyUserCookie } from "@/lib/user";
+import { getUserId } from "@/lib/user";
+import { toActionResponse } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
-  const { userId, isNew } = await getOrCreateUser(req);
+  const userId = getUserId(req);
   const body = await req.json();
   const { title, desc, tags, hurdle, time } = body;
 
@@ -11,14 +12,5 @@ export async function POST(req: NextRequest) {
     data: { userId, title, desc: desc ?? "", tags: tags ?? [], hurdle, time },
   });
 
-  const res = NextResponse.json({
-    id: action.id,
-    title: action.title,
-    desc: action.desc,
-    tags: action.tags,
-    hurdle: action.hurdle,
-    time: action.time,
-  });
-  if (isNew) applyUserCookie(res, userId);
-  return res;
+  return NextResponse.json(toActionResponse(action));
 }

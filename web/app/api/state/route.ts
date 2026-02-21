@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getOrCreateUser, applyUserCookie } from "@/lib/user";
-import { getDateForTimezone, modeFromDb } from "@/lib/utils";
+import { getUserId } from "@/lib/user";
+import {
+  getDateForTimezone,
+  modeFromDb,
+  toActionResponse,
+  toRewardResponse,
+} from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
-  const { userId, isNew } = await getOrCreateUser(req);
+  const userId = getUserId(req);
 
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
@@ -19,26 +24,11 @@ export async function GET(req: NextRequest) {
     prisma.doneReward.findMany({ where: { userId, date: today } }),
   ]);
 
-  const state = {
+  return NextResponse.json({
     points: user.points,
     mode: modeFromDb(user.mode),
-    actions: actions.map((a) => ({
-      id: a.id,
-      title: a.title,
-      desc: a.desc,
-      tags: a.tags,
-      hurdle: a.hurdle,
-      time: a.time,
-    })),
-    rewards: rewards.map((r) => ({
-      id: r.id,
-      title: r.title,
-      desc: r.desc,
-      tags: r.tags,
-      satisfaction: r.satisfaction,
-      time: r.time,
-      price: r.price,
-    })),
+    actions: actions.map(toActionResponse),
+    rewards: rewards.map(toRewardResponse),
     // actionId が null（行動削除済み）のものは除外
     doneActions: doneActions
       .filter((d) => d.actionId !== null)
@@ -58,9 +48,5 @@ export async function GET(req: NextRequest) {
         count: d.count,
         completedAt: d.date,
       })),
-  };
-
-  const res = NextResponse.json(state);
-  if (isNew) applyUserCookie(res, userId);
-  return res;
+  });
 }

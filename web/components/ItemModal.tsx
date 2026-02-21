@@ -160,7 +160,7 @@ export default function ItemModal({
 
   const isAction = modalType === "action";
   const modeConfig = MODES[mode];
-  const emoji = mode === "easy" ? "🟢" : mode === "hard" ? "🔴" : "🟡";
+  const emoji = modeConfig.emoji;
 
   const previewPt = isAction
     ? calcActionPt(hurdle, time, mode)

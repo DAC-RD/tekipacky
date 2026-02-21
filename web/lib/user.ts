@@ -1,40 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "./prisma";
-
-const COOKIE_NAME = "userId";
-const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1年
+import { NextRequest } from "next/server";
 
 /**
- * Cookieからユーザーを取得、存在しなければ空で新規作成する。
- * ルートハンドラの先頭で呼び出し、isNew が true の場合はレスポンスにCookieをセットすること。
+ * proxy が注入した x-user-id ヘッダーから userId を取得する。
+ * userId の解決・Cookie 付与は proxy.ts で一元管理している。
  */
-export async function getOrCreateUser(
-  req: NextRequest,
-): Promise<{ userId: string; isNew: boolean }> {
-  const userId = req.cookies.get(COOKIE_NAME)?.value;
-
-  if (userId) {
-    const exists = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    });
-    if (exists) return { userId, isNew: false };
-  }
-
-  const user = await prisma.user.create({ data: {} });
-  return { userId: user.id, isNew: true };
-}
-
-/** 新規ユーザーのCookieをレスポンスにセットする */
-export function applyUserCookie<T>(
-  res: NextResponse<T>,
-  userId: string,
-): NextResponse<T> {
-  res.cookies.set(COOKIE_NAME, userId, {
-    httpOnly: true,
-    sameSite: "lax",
-    maxAge: COOKIE_MAX_AGE,
-    path: "/",
-  });
-  return res;
+export function getUserId(req: NextRequest): string {
+  const userId = req.headers.get("x-user-id");
+  if (!userId) throw new Error("x-user-id header missing");
+  return userId;
 }

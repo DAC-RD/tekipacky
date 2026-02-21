@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getOrCreateUser, applyUserCookie } from "@/lib/user";
+import { getUserId } from "@/lib/user";
 import { getDateForTimezone } from "@/lib/utils";
 
 /** count を delta 分増減する。0以下になったレコードを削除する */
@@ -8,10 +8,10 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ rewardId: string }> },
 ) {
-  const { userId, isNew } = await getOrCreateUser(req);
+  const userId = getUserId(req);
   const { rewardId } = await params;
   const body = await req.json();
-  const { delta, pt } = body as { delta: number; pt: number };
+  const { delta } = body as { delta: number };
 
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
@@ -30,9 +30,7 @@ export async function PATCH(
   });
 
   if (!existing) {
-    const res = NextResponse.json({ ok: true });
-    if (isNew) applyUserCookie(res, userId);
-    return res;
+    return NextResponse.json({ ok: true });
   }
 
   const newCount = existing.count + delta;
@@ -46,13 +44,12 @@ export async function PATCH(
     });
   }
 
-  // ポイントを調整（delta × pt）: ご褒美はdeltaが+なら消費増加（減算）
+  // DBに保存済みのptを使用（クライアント値を信頼しない）
+  // ご褒美はdeltaが+なら消費増加（減算）、-なら消費減少（加算）
   await prisma.user.update({
     where: { id: userId },
-    data: { points: { decrement: pt * delta } },
+    data: { points: { decrement: existing.pt * delta } },
   });
 
-  const res = NextResponse.json({ ok: true });
-  if (isNew) applyUserCookie(res, userId);
-  return res;
+  return NextResponse.json({ ok: true });
 }

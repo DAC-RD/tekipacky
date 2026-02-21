@@ -1,11 +1,7 @@
-import { DoneItem, Mode } from "./types";
+import { Action, DoneItem, Mode, Reward } from "./types";
 import { MODES } from "./constants";
 
 type DbMode = "EASY" | "NORMAL" | "HARD";
-
-export function getTodayJST(): string {
-  return getDateForTimezone("Asia/Tokyo");
-}
 
 /** ユーザーのタイムゾーンでの今日の日付を "YYYY-MM-DD" 形式で返す */
 export function getDateForTimezone(timezone: string): string {
@@ -61,4 +57,44 @@ export function upsertDoneItem(
   }
   if (delta <= 0) return list;
   return [...list, { id, title, pt, count: delta, completedAt }];
+}
+
+/** PrismaのActionレコードをAPIレスポンス形式に変換 */
+export function toActionResponse(a: {
+  id: number;
+  title: string;
+  desc: string;
+  tags: string[];
+  hurdle: number;
+  time: number;
+}): Action {
+  return {
+    id: a.id,
+    title: a.title,
+    desc: a.desc,
+    tags: a.tags,
+    hurdle: a.hurdle,
+    time: a.time,
+  };
+}
+
+/** PrismaのRewardレコードをAPIレスポンス形式に変換 */
+export function toRewardResponse(r: {
+  id: number;
+  title: string;
+  desc: string;
+  tags: string[];
+  satisfaction: number;
+  time: number;
+  price: number;
+}): Reward {
+  return {
+    id: r.id,
+    title: r.title,
+    desc: r.desc,
+    tags: r.tags,
+    satisfaction: r.satisfaction,
+    time: r.time,
+    price: r.price,
+  };
 }

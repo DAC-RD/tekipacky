@@ -38,7 +38,7 @@ export function useStore() {
       fetch("/api/done/actions", {
         method: "POST",
         headers: JSON_HEADERS,
-        body: JSON.stringify({ actionId: id, pt }),
+        body: JSON.stringify({ actionId: id }),
       }).catch(console.error);
 
       return pt;
@@ -77,7 +77,7 @@ export function useStore() {
       fetch("/api/done/rewards", {
         method: "POST",
         headers: JSON_HEADERS,
-        body: JSON.stringify({ rewardId: id, pt }),
+        body: JSON.stringify({ rewardId: id }),
       }).catch(console.error);
 
       return { pt, insufficient: false };
@@ -106,7 +106,7 @@ export function useStore() {
       fetch(`/api/done/actions/${id}`, {
         method: "PATCH",
         headers: JSON_HEADERS,
-        body: JSON.stringify({ delta, pt: done.pt }),
+        body: JSON.stringify({ delta }),
       }).catch(console.error);
     },
     [state],
@@ -133,7 +133,7 @@ export function useStore() {
       fetch(`/api/done/rewards/${id}`, {
         method: "PATCH",
         headers: JSON_HEADERS,
-        body: JSON.stringify({ delta, pt: done.pt }),
+        body: JSON.stringify({ delta }),
       }).catch(console.error);
     },
     [state],
@@ -141,54 +141,34 @@ export function useStore() {
 
   /** 行動・ご褒美を追加または更新する。DBが発行したIDで状態を更新する */
   const saveItem = useCallback(async (data: ModalSaveData): Promise<void> => {
-    if (data.type === "action") {
-      if (data.id !== null) {
-        const res = await fetch(`/api/actions/${data.id}`, {
-          method: "PUT",
-          headers: JSON_HEADERS,
-          body: JSON.stringify(data),
-        });
-        const updated = await res.json();
-        setState((prev) => ({
-          ...prev,
-          actions: prev.actions.map((a) => (a.id === data.id ? updated : a)),
-        }));
-      } else {
-        const res = await fetch("/api/actions", {
-          method: "POST",
-          headers: JSON_HEADERS,
-          body: JSON.stringify(data),
-        });
-        const created = await res.json();
-        setState((prev) => ({
-          ...prev,
-          actions: [...prev.actions, created],
-        }));
-      }
+    const isAction = data.type === "action";
+    const baseUrl = isAction ? "/api/actions" : "/api/rewards";
+    const url = data.id !== null ? `${baseUrl}/${data.id}` : baseUrl;
+    const method = data.id !== null ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: JSON_HEADERS,
+      body: JSON.stringify(data),
+    });
+    const item = await res.json();
+
+    if (isAction) {
+      setState((prev) => ({
+        ...prev,
+        actions:
+          data.id !== null
+            ? prev.actions.map((a) => (a.id === data.id ? item : a))
+            : [...prev.actions, item],
+      }));
     } else {
-      if (data.id !== null) {
-        const res = await fetch(`/api/rewards/${data.id}`, {
-          method: "PUT",
-          headers: JSON_HEADERS,
-          body: JSON.stringify(data),
-        });
-        const updated = await res.json();
-        setState((prev) => ({
-          ...prev,
-          rewards: prev.rewards.map((r) => (r.id === data.id ? updated : r)),
-        }));
-      } else {
-        const res = await fetch("/api/rewards", {
-          method: "POST",
-          headers: JSON_HEADERS,
-          body: JSON.stringify(data),
-        });
-        const created = await res.json();
-        setState((prev) => ({
-          ...prev,
-          rewards: [...prev.rewards, created],
-        }));
-      }
+      setState((prev) => ({
+        ...prev,
+        rewards:
+          data.id !== null
+            ? prev.rewards.map((r) => (r.id === data.id ? item : r))
+            : [...prev.rewards, item],
+      }));
     }
   }, []);
 

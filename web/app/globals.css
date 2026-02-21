@@ -144,6 +144,10 @@ body {
 }
 
 .done-header {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
   padding: 12px 16px;
   cursor: pointer;
   display: flex;

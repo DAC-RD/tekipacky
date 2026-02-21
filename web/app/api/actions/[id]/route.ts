@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getOrCreateUser, applyUserCookie } from "@/lib/user";
+import { getUserId } from "@/lib/user";
+import { toActionResponse } from "@/lib/utils";
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { userId, isNew } = await getOrCreateUser(req);
+  const userId = getUserId(req);
   const { id } = await params;
   const body = await req.json();
   const { title, desc, tags, hurdle, time } = body;
@@ -16,28 +17,17 @@ export async function PUT(
     data: { title, desc: desc ?? "", tags: tags ?? [], hurdle, time },
   });
 
-  const res = NextResponse.json({
-    id: action.id,
-    title: action.title,
-    desc: action.desc,
-    tags: action.tags,
-    hurdle: action.hurdle,
-    time: action.time,
-  });
-  if (isNew) applyUserCookie(res, userId);
-  return res;
+  return NextResponse.json(toActionResponse(action));
 }
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { userId, isNew } = await getOrCreateUser(req);
+  const userId = getUserId(req);
   const { id } = await params;
 
   await prisma.action.delete({ where: { id: Number(id), userId } });
 
-  const res = NextResponse.json({ ok: true });
-  if (isNew) applyUserCookie(res, userId);
-  return res;
+  return NextResponse.json({ ok: true });
 }

@@ -22,7 +22,7 @@ export interface DoneItem {
   title: string;
   pt: number;
   count: number;
-  completedAt: string; // UTC ISO 8601
+  completedAt: string; // ユーザーのタイムゾーンでの "YYYY-MM-DD"
 }
 
 export type Mode = "easy" | "normal" | "hard";

@@ -1,22 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getOrCreateUser, applyUserCookie } from "@/lib/user";
-import { getDateForTimezone } from "@/lib/utils";
+import { getUserId } from "@/lib/user";
+import { calcRewardPt, getDateForTimezone, modeFromDb } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
-  const { userId, isNew } = await getOrCreateUser(req);
+  const userId = getUserId(req);
   const body = await req.json();
-  const { rewardId, pt } = body as { rewardId: number; pt: number };
+  const { rewardId } = body as { rewardId: number };
 
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
-    select: { timezone: true },
+    select: { timezone: true, mode: true, points: true },
   });
   const today = getDateForTimezone(user.timezone);
 
   const reward = await prisma.reward.findUniqueOrThrow({
     where: { id: rewardId, userId },
   });
+
+  // サーバー側でptを計算（クライアント値を信頼しない）
+  const pt = calcRewardPt(
+    reward.satisfaction,
+    reward.time,
+    reward.price,
+    modeFromDb(user.mode),
+  );
+
+  // サーバー側でも残高チェック
+  if (user.points < pt) {
+    return NextResponse.json({ error: "insufficient points" }, { status: 400 });
+  }
 
   // 既存レコードがあればcountを+1、なければ新規作成
   const done = await prisma.doneReward.upsert({
@@ -38,13 +51,11 @@ export async function POST(req: NextRequest) {
     data: { points: { decrement: pt } },
   });
 
-  const res = NextResponse.json({
+  return NextResponse.json({
     id: done.rewardId,
     title: done.title,
     pt: done.pt,
     count: done.count,
     completedAt: done.date,
   });
-  if (isNew) applyUserCookie(res, userId);
-  return res;
 }

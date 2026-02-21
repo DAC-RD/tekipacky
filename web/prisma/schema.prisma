@@ -40,6 +40,8 @@ model Action {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   doneActions DoneAction[]
+
+  @@index([userId])
 }
 
 // ご褒美マスタ
@@ -56,6 +58,8 @@ model Reward {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   doneRewards  DoneReward[]
+
+  @@index([userId])
 }
 
 // 行動完了ログ
@@ -74,6 +78,7 @@ model DoneAction {
   date     String  // User.timezone での "YYYY-MM-DD"
 
   @@unique([userId, actionId, date])
+  @@index([userId, date])
 }
 
 // ご褒美使用ログ
@@ -89,4 +94,5 @@ model DoneReward {
   date     String  // User.timezone での "YYYY-MM-DD"
 
   @@unique([userId, rewardId, date])
+  @@index([userId, date])
 }

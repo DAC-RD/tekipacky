@@ -876,4 +876,3 @@ export const INITIAL_STATE: AppState = {
   doneRewards: [],
 };
 
-export const STORAGE_KEY = "tekipakky_state";
