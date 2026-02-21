@@ -1,26 +1,447 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0f0e17;
+  --surface: #1a1828;
+  --surface2: #242235;
+  --accent: #ff6b35;
+  --accent2: #ffd166;
+  --reward: #06d6a0;
+  --text: #fffffe;
+  --muted: #7c7a8e;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-zen-kaku);
+  --font-space-grotesk: var(--font-space-grotesk);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-zen-kaku), "Zen Kaku Gothic New", sans-serif;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* Point display card */
+.point-display {
+  background: linear-gradient(135deg, #ff6b35 0%, #ff9500 100%);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.point-display::before {
+  content: "";
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+}
+
+.point-display::after {
+  content: "";
+  position: absolute;
+  bottom: -40px;
+  left: 20px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+}
+
+.point-number {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+}
+
+.font-space {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Tab buttons */
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+}
+
+.tab-btn.active-action {
+  background: var(--accent);
+  color: white;
+}
+
+.tab-btn.active-reward {
+  background: var(--reward);
+  color: #0f0e17;
+}
+
+/* Action / Reward cards */
+.action-card {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1.5px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.action-card.reward-card:hover {
+  border-color: var(--reward);
+}
+
+/* Point badge */
+.pt-badge {
+  background: var(--surface2);
+  color: var(--accent2);
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pt-badge.reward {
+  color: var(--reward);
+}
+
+/* Done accordion */
+.done-section {
+  background: var(--surface);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.done-header {
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+.done-header:hover {
+  color: var(--text);
+}
+
+.done-item {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--bg);
+  font-size: 0.9rem;
+}
+
+/* Count controls */
+.count-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.count-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.count-btn:hover {
+  background: var(--accent);
+}
+
+.count-num {
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Section title */
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Chevron */
+.chevron {
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .modal-overlay {
+    align-items: center;
+    padding: 20px;
+  }
+}
+
+.modal-box {
+  background: var(--surface);
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  padding: 28px 24px 40px;
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+
+@media (min-width: 640px) {
+  .modal-box {
+    border-radius: 24px;
+    padding: 32px;
+    height: auto;
+    max-height: 90vh;
+    max-width: 560px;
+  }
+}
+
+/* Form elements */
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-input:focus {
+  border-color: var(--accent);
+}
+
+.option-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.option-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--surface2);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+
+.option-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.option-btn.selected-action {
+  border-color: var(--accent);
+  background: rgba(255, 107, 53, 0.15);
+  color: var(--accent);
+}
+
+.option-btn.selected-reward {
+  border-color: var(--reward);
+  background: rgba(6, 214, 160, 0.15);
+  color: var(--reward);
+}
+
+.pt-preview {
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 14px 18px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.pt-preview span {
+  font-family: var(--font-space-grotesk), "Space Grotesk", monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent2);
+  display: block;
+  line-height: 1.2;
+}
+
+.pt-preview.reward-preview span {
+  color: var(--reward);
+}
+
+/* Mode badge */
+.mode-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+}
+
+/* FAB */
+.fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.5);
+  transition: all 0.2s;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 28px rgba(255, 107, 53, 0.6);
+}
+
+/* Float animation */
+.float-pt {
+  position: fixed;
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  pointer-events: none;
+  animation: floatUp 1s ease forwards;
+  z-index: 999;
+}
+
+/* Keyframes */
+@keyframes slideUp {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pointFlash {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.flash {
+  animation: pointFlash 0.3s ease;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px);
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface2);
+  border-radius: 3px;
 }
