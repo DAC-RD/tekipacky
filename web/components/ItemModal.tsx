@@ -219,7 +219,7 @@ export default function ItemModal({
       desc: desc.trim(),
       tags,
       hurdle,
-      time,
+      time: isAction ? time : rewardTime,
       satisfaction,
       rewardTime,
       price,
