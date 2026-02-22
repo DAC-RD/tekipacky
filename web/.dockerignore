@@ -1,0 +1,40 @@
+# バージョン管理
+.git
+.gitignore
+
+# 開発用設定・キャッシュ
+.next
+node_modules
+npm-debug.log*
+
+# 環境変数（本番はGitHub Secrets経由で渡す）
+.env
+.env.*
+!.env.example
+
+# Docker関連（自己参照を避ける）
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# CI/CD
+.github
+
+# モノレポ内の不要ディレクトリ（実態に合わせて追記してください）
+docs
+*.md
+!README.md
+
+# テスト
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+coverage
+
+# エディタ・OS
+.DS_Store
+.vscode
+.idea
+Thumbs.db

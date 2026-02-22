@@ -1,0 +1,17 @@
+# 本番用オーバーライド
+# 使い方: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# build: セクションを上書きして、GHCRのイメージをpullして起動する
+# GHCR_IMAGE は環境変数または .env で指定する
+# 例: GHCR_IMAGE=ghcr.io/yourname/yourrepo:latest
+
+services:
+  app:
+    image: ${GHCR_IMAGE}
+    build: !reset null   # docker-compose.ymlのbuild:を無効化
+    platform: linux/arm64
+    restart: unless-stopped
+
+  db:
+    platform: linux/arm64
+    restart: unless-stopped
