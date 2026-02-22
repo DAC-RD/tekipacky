@@ -16,6 +16,7 @@ CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]
 FROM deps AS builder
 WORKDIR /app
 COPY . .
+RUN npx prisma generate
 RUN npm run build
 
 # ── 本番実行ステージ ──────────────────────────────────
