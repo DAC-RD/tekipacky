@@ -1,0 +1,100 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'web/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push (linux/arm64)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web
+          platforms: linux/arm64
+          push: true
+          tags: ${{ secrets.GHCR_IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          tags: tag:ci
+
+      - name: Copy Compose files to Pi
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.PI_USER }}@${{ secrets.PI_TAILSCALE_IP }} \
+            "mkdir -p ~/projects/${{ github.event.repository.name }}"
+
+          scp -o StrictHostKeyChecking=no \
+            web/docker-compose.yml \
+            web/docker-compose.prod.yml \
+            ${{ secrets.PI_USER }}@${{ secrets.PI_TAILSCALE_IP }}:~/projects/${{ github.event.repository.name }}/
+
+      - name: Deploy
+        run: |
+          # .envの内容をbase64エンコードしてSSH越しに渡す
+          ENV_B64=$(echo "${{ secrets.ENV_FILE }}" | base64 -w 0)
+
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.PI_USER }}@${{ secrets.PI_TAILSCALE_IP }} \
+            "echo $ENV_B64 | base64 -d > ~/projects/${{ github.event.repository.name }}/.env"
+
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.PI_USER }}@${{ secrets.PI_TAILSCALE_IP }} << 'EOF'
+            set -e
+            cd ~/projects/${{ github.event.repository.name }}
+
+            docker pull ${{ secrets.GHCR_IMAGE }}
+
+            # DBが起動していなければ全サービスを起動、起動済みならappのみ再起動
+            if [ -z "$(docker compose -f docker-compose.yml -f docker-compose.prod.yml ps -q db)" ]; then
+              echo "DB not running. Starting all services..."
+              GHCR_IMAGE=${{ secrets.GHCR_IMAGE }} \
+                docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+                up -d
+            else
+              echo "DB already running. Restarting app only..."
+              GHCR_IMAGE=${{ secrets.GHCR_IMAGE }} \
+                docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+                up -d --no-deps app
+            fi
+
+            docker image prune -f
+          EOF
