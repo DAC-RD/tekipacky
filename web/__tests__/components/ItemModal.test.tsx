@@ -4,7 +4,14 @@ import ItemModal from "@/components/ItemModal";
 import type { Action, Reward } from "@/lib/types";
 
 const sampleActions: Action[] = [
-  { id: 1, title: "朝ごはんを食べる", desc: "", tags: ["食事", "朝"], hurdle: 1, time: 1 },
+  {
+    id: 1,
+    title: "朝ごはんを食べる",
+    desc: "",
+    tags: ["食事", "朝"],
+    hurdle: 1,
+    time: 1,
+  },
   { id: 2, title: "散歩する", desc: "", tags: ["運動"], hurdle: 2, time: 2 },
 ];
 
@@ -134,7 +141,9 @@ describe("ItemModal", () => {
 
     it("rewardモードで hurdle フィールドは表示されない", () => {
       render(<ItemModal {...baseProps} initialType="reward" />);
-      expect(screen.queryByText("ハードル（面倒くささ）")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("ハードル（面倒くささ）"),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -230,13 +239,17 @@ describe("ItemModal", () => {
   describe("編集時の初期値", () => {
     it("編集モードでアクションの初期値がフォームに設定される", () => {
       render(<ItemModal {...baseProps} initialType="action" editId={1} />);
-      const titleInput = screen.getByPlaceholderText("例: 朝ごはんを食べる") as HTMLInputElement;
+      const titleInput = screen.getByPlaceholderText(
+        "例: 朝ごはんを食べる",
+      ) as HTMLInputElement;
       expect(titleInput.value).toBe("朝ごはんを食べる");
     });
 
     it("編集モードでリワードの初期値がフォームに設定される", () => {
       render(<ItemModal {...baseProps} initialType="reward" editId={1} />);
-      const titleInput = screen.getByPlaceholderText("例: Netflixを1話見る") as HTMLInputElement;
+      const titleInput = screen.getByPlaceholderText(
+        "例: Netflixを1話見る",
+      ) as HTMLInputElement;
       expect(titleInput.value).toBe("Netflixを見る");
     });
   });

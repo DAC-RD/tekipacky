@@ -229,7 +229,14 @@ describe("upsertDoneItem", () => {
 
     it("既存リストに新規アイテムを追加する", () => {
       const list = [sampleItem];
-      const result = upsertDoneItem(list, 99, "新しい行動", 10, 1, "2024-01-15");
+      const result = upsertDoneItem(
+        list,
+        99,
+        "新しい行動",
+        10,
+        1,
+        "2024-01-15",
+      );
       expect(result).toHaveLength(2);
       expect(result.find((d) => d.id === 99)).toBeDefined();
     });

@@ -22,7 +22,10 @@ import { POST } from "@/app/api/done/rewards/route";
 const mockPrisma = vi.mocked(prisma, true);
 const USER_ID = "test-user-123";
 
-function makeRequest(body: unknown, extraHeaders?: Record<string, string>): NextRequest {
+function makeRequest(
+  body: unknown,
+  extraHeaders?: Record<string, string>,
+): NextRequest {
   return new NextRequest("http://localhost/api/done/rewards", {
     method: "POST",
     headers: {

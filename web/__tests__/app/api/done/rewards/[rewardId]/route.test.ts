@@ -55,12 +55,16 @@ describe("PATCH /api/done/rewards/[rewardId]", () => {
   });
 
   it("delta=+1 で count が増加し user.points が decrement される（リワードのため逆）", async () => {
-    mockPrisma.doneReward.findUnique.mockResolvedValue(existingDoneReward as never);
+    mockPrisma.doneReward.findUnique.mockResolvedValue(
+      existingDoneReward as never,
+    );
     mockPrisma.doneReward.update.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
     const req = makeRequest("1", { delta: 1 });
-    const res = await PATCH(req, { params: Promise.resolve({ rewardId: "1" }) });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ rewardId: "1" }),
+    });
     const json = await res.json();
 
     expect(res.status).toBe(200);
@@ -76,7 +80,9 @@ describe("PATCH /api/done/rewards/[rewardId]", () => {
   });
 
   it("delta=-1 で count が減少し user.points が増加する（消費キャンセル）", async () => {
-    mockPrisma.doneReward.findUnique.mockResolvedValue(existingDoneReward as never);
+    mockPrisma.doneReward.findUnique.mockResolvedValue(
+      existingDoneReward as never,
+    );
     mockPrisma.doneReward.update.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
@@ -114,7 +120,9 @@ describe("PATCH /api/done/rewards/[rewardId]", () => {
     mockPrisma.doneReward.findUnique.mockResolvedValue(null as never);
 
     const req = makeRequest("99", { delta: 1 });
-    const res = await PATCH(req, { params: Promise.resolve({ rewardId: "99" }) });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ rewardId: "99" }),
+    });
     const json = await res.json();
 
     expect(json.ok).toBe(true);

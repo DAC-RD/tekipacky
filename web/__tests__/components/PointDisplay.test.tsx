@@ -57,7 +57,14 @@ describe("PointDisplay", () => {
   });
 
   it("ポイントが 0 のときも正しく表示される", () => {
-    render(<PointDisplay {...defaultProps} points={0} todayEarned={0} todaySpent={0} />);
+    render(
+      <PointDisplay
+        {...defaultProps}
+        points={0}
+        todayEarned={0}
+        todaySpent={0}
+      />,
+    );
     expect(screen.getByText("0")).toBeInTheDocument();
     expect(screen.getByText("+0")).toBeInTheDocument();
     expect(screen.getByText("-0")).toBeInTheDocument();

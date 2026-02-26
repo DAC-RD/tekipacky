@@ -11,11 +11,26 @@ const sampleState = {
   points: 50,
   mode: "normal",
   actions: [
-    { id: 1, title: "朝ごはんを食べる", desc: "", tags: ["食事"], hurdle: 1, time: 1 },
+    {
+      id: 1,
+      title: "朝ごはんを食べる",
+      desc: "",
+      tags: ["食事"],
+      hurdle: 1,
+      time: 1,
+    },
     { id: 2, title: "散歩する", desc: "", tags: ["運動"], hurdle: 2, time: 2 },
   ],
   rewards: [
-    { id: 1, title: "Netflixを見る", desc: "", tags: ["動画"], satisfaction: 2, time: 2, price: 1 },
+    {
+      id: 1,
+      title: "Netflixを見る",
+      desc: "",
+      tags: ["動画"],
+      satisfaction: 2,
+      time: 2,
+      price: 1,
+    },
   ],
   doneActions: [],
   doneRewards: [],
@@ -53,7 +68,7 @@ describe("useStore", () => {
 
     it("マウント後に /api/state を fetch する", async () => {
       mockFetchJson(sampleState);
-      const { result } = renderHook(() => useStore());
+      renderHook(() => useStore());
       await act(async () => {
         await new Promise((r) => setTimeout(r, 0));
       });
@@ -90,7 +105,10 @@ describe("useStore", () => {
       });
 
       // POST モックをセット
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
 
       await act(async () => {
         await result.current.completeAction(1); // hurdle=1, time=1, normal: 1pt
@@ -106,7 +124,10 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
 
       await act(async () => {
         await result.current.completeAction(1);
@@ -123,7 +144,10 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
 
       await act(async () => {
         await result.current.completeAction(1);
@@ -159,7 +183,10 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
 
       await act(async () => {
         await result.current.completeReward(1); // satisfaction=2,time=2,price=1,normal: 2*2*1*1.0=4pt
@@ -175,7 +202,10 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      let result2: { pt: number; insufficient: boolean } = { pt: 0, insufficient: false };
+      let result2: { pt: number; insufficient: boolean } = {
+        pt: 0,
+        insufficient: false,
+      };
       await act(async () => {
         result2 = await result.current.completeReward(1);
       });
@@ -204,7 +234,10 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
 
       await act(async () => {
         await result.current.completeReward(1);
@@ -221,7 +254,15 @@ describe("useStore", () => {
     it("PATCH /api/done/actions/{id} が呼ばれる", async () => {
       const stateWithDone = {
         ...sampleState,
-        doneActions: [{ id: 1, title: "朝ごはんを食べる", pt: 1, count: 1, completedAt: "2024-01-15" }],
+        doneActions: [
+          {
+            id: 1,
+            title: "朝ごはんを食べる",
+            pt: 1,
+            count: 1,
+            completedAt: "2024-01-15",
+          },
+        ],
       };
       mockFetchJson(stateWithDone);
       const { result } = renderHook(() => useStore());
@@ -229,7 +270,10 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ ok: true }) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true }),
+      });
 
       act(() => {
         result.current.adjustDoneAction(1, 1);
@@ -244,7 +288,15 @@ describe("useStore", () => {
     it("delta=+1 でポイントが増加する", async () => {
       const stateWithDone = {
         ...sampleState,
-        doneActions: [{ id: 1, title: "朝ごはんを食べる", pt: 5, count: 1, completedAt: "2024-01-15" }],
+        doneActions: [
+          {
+            id: 1,
+            title: "朝ごはんを食べる",
+            pt: 5,
+            count: 1,
+            completedAt: "2024-01-15",
+          },
+        ],
       };
       mockFetchJson(stateWithDone);
       const { result } = renderHook(() => useStore());
@@ -252,7 +304,10 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ ok: true }) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true }),
+      });
 
       act(() => {
         result.current.adjustDoneAction(1, 1);
@@ -270,7 +325,10 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ ok: true }) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true }),
+      });
 
       act(() => {
         result.current.changeMode("hard");
@@ -286,7 +344,10 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ ok: true }) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true }),
+      });
 
       act(() => {
         result.current.changeMode("easy");
@@ -307,13 +368,18 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ ok: true }) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true }),
+      });
 
       await act(async () => {
         await result.current.deleteItem("action", 1);
       });
 
-      expect(result.current.state.actions.find((a) => a.id === 1)).toBeUndefined();
+      expect(
+        result.current.state.actions.find((a) => a.id === 1),
+      ).toBeUndefined();
     });
 
     it("DELETE /api/actions/{id} が呼ばれる", async () => {
@@ -323,7 +389,10 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ ok: true }) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true }),
+      });
 
       await act(async () => {
         await result.current.deleteItem("action", 1);
@@ -344,7 +413,14 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      const newAction = { id: 99, title: "新しい行動", desc: "", tags: [], hurdle: 1, time: 1 };
+      const newAction = {
+        id: 99,
+        title: "新しい行動",
+        desc: "",
+        tags: [],
+        hurdle: 1,
+        time: 1,
+      };
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(newAction),
@@ -375,7 +451,14 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      const updatedAction = { id: 1, title: "更新された行動", desc: "", tags: [], hurdle: 2, time: 2 };
+      const updatedAction = {
+        id: 1,
+        title: "更新された行動",
+        desc: "",
+        tags: [],
+        hurdle: 2,
+        time: 2,
+      };
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(updatedAction),
@@ -406,7 +489,14 @@ describe("useStore", () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      const newAction = { id: 99, title: "新しい行動", desc: "", tags: [], hurdle: 1, time: 1 };
+      const newAction = {
+        id: 99,
+        title: "新しい行動",
+        desc: "",
+        tags: [],
+        hurdle: 1,
+        time: 1,
+      };
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(newAction),
@@ -425,7 +515,9 @@ describe("useStore", () => {
       });
 
       expect(result.current.state.actions).toHaveLength(3); // 元2 + 新規1
-      expect(result.current.state.actions.find((a) => a.id === 99)).toBeDefined();
+      expect(
+        result.current.state.actions.find((a) => a.id === 99),
+      ).toBeDefined();
     });
   });
 });

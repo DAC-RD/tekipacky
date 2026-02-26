@@ -44,7 +44,12 @@ describe("POST /api/rewards", () => {
     };
     mockPrisma.reward.create.mockResolvedValue(created as never);
 
-    const req = makeRequest({ title: "Netflixを見る", satisfaction: 2, time: 2, price: 1 });
+    const req = makeRequest({
+      title: "Netflixを見る",
+      satisfaction: 2,
+      time: 2,
+      price: 1,
+    });
     const res = await POST(req);
     const json = await res.json();
 
@@ -54,10 +59,24 @@ describe("POST /api/rewards", () => {
   });
 
   it("desc が省略されたときデフォルト空文字が設定される", async () => {
-    const created = { id: 1, userId: USER_ID, title: "テスト", desc: "", tags: [], satisfaction: 1, time: 1, price: 1 };
+    const created = {
+      id: 1,
+      userId: USER_ID,
+      title: "テスト",
+      desc: "",
+      tags: [],
+      satisfaction: 1,
+      time: 1,
+      price: 1,
+    };
     mockPrisma.reward.create.mockResolvedValue(created as never);
 
-    const req = makeRequest({ title: "テスト", satisfaction: 1, time: 1, price: 1 });
+    const req = makeRequest({
+      title: "テスト",
+      satisfaction: 1,
+      time: 1,
+      price: 1,
+    });
     await POST(req);
 
     expect(mockPrisma.reward.create).toHaveBeenCalledWith(
@@ -68,10 +87,24 @@ describe("POST /api/rewards", () => {
   });
 
   it("tags が省略されたときデフォルト空配列が設定される", async () => {
-    const created = { id: 1, userId: USER_ID, title: "テスト", desc: "", tags: [], satisfaction: 1, time: 1, price: 1 };
+    const created = {
+      id: 1,
+      userId: USER_ID,
+      title: "テスト",
+      desc: "",
+      tags: [],
+      satisfaction: 1,
+      time: 1,
+      price: 1,
+    };
     mockPrisma.reward.create.mockResolvedValue(created as never);
 
-    const req = makeRequest({ title: "テスト", satisfaction: 1, time: 1, price: 1 });
+    const req = makeRequest({
+      title: "テスト",
+      satisfaction: 1,
+      time: 1,
+      price: 1,
+    });
     await POST(req);
 
     expect(mockPrisma.reward.create).toHaveBeenCalledWith(

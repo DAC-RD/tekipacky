@@ -17,12 +17,16 @@ describe("FilterArea", () => {
   describe("検索入力", () => {
     it("検索入力欄が表示される", () => {
       render(<FilterArea {...defaultProps} />);
-      expect(screen.getByPlaceholderText("キーワードで検索")).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("キーワードで検索"),
+      ).toBeInTheDocument();
     });
 
     it("searchQuery の値が入力欄に反映される", () => {
       render(<FilterArea {...defaultProps} searchQuery="テスト" />);
-      const input = screen.getByPlaceholderText("キーワードで検索") as HTMLInputElement;
+      const input = screen.getByPlaceholderText(
+        "キーワードで検索",
+      ) as HTMLInputElement;
       expect(input.value).toBe("テスト");
     });
 
@@ -53,21 +57,39 @@ describe("FilterArea", () => {
 
     it("ソートボタンをクリックすると onSortChange が呼ばれる", () => {
       const onSortChange = vi.fn();
-      render(<FilterArea {...defaultProps} sortOrder="default" onSortChange={onSortChange} />);
+      render(
+        <FilterArea
+          {...defaultProps}
+          sortOrder="default"
+          onSortChange={onSortChange}
+        />,
+      );
       fireEvent.click(screen.getByText("↕ 並び替え"));
       expect(onSortChange).toHaveBeenCalledWith("pt-desc");
     });
 
     it("pt-desc → pt-asc へサイクルする", () => {
       const onSortChange = vi.fn();
-      render(<FilterArea {...defaultProps} sortOrder="pt-desc" onSortChange={onSortChange} />);
+      render(
+        <FilterArea
+          {...defaultProps}
+          sortOrder="pt-desc"
+          onSortChange={onSortChange}
+        />,
+      );
       fireEvent.click(screen.getByText("↓ pt 高い順"));
       expect(onSortChange).toHaveBeenCalledWith("pt-asc");
     });
 
     it("pt-asc → default へサイクルする", () => {
       const onSortChange = vi.fn();
-      render(<FilterArea {...defaultProps} sortOrder="pt-asc" onSortChange={onSortChange} />);
+      render(
+        <FilterArea
+          {...defaultProps}
+          sortOrder="pt-asc"
+          onSortChange={onSortChange}
+        />,
+      );
       fireEvent.click(screen.getByText("↑ pt 低い順"));
       expect(onSortChange).toHaveBeenCalledWith("default");
     });

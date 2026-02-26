@@ -32,7 +32,15 @@ describe("POST /api/actions", () => {
   });
 
   it("正常なリクエストでアクションが作成される", async () => {
-    const created = { id: 1, userId: USER_ID, title: "朝ごはんを食べる", desc: "", tags: [], hurdle: 1, time: 1 };
+    const created = {
+      id: 1,
+      userId: USER_ID,
+      title: "朝ごはんを食べる",
+      desc: "",
+      tags: [],
+      hurdle: 1,
+      time: 1,
+    };
     mockPrisma.action.create.mockResolvedValue(created as never);
 
     const req = makeRequest({ title: "朝ごはんを食べる", hurdle: 1, time: 1 });
@@ -45,7 +53,15 @@ describe("POST /api/actions", () => {
   });
 
   it("desc が省略されたときデフォルト空文字が設定される", async () => {
-    const created = { id: 1, userId: USER_ID, title: "テスト", desc: "", tags: [], hurdle: 1, time: 1 };
+    const created = {
+      id: 1,
+      userId: USER_ID,
+      title: "テスト",
+      desc: "",
+      tags: [],
+      hurdle: 1,
+      time: 1,
+    };
     mockPrisma.action.create.mockResolvedValue(created as never);
 
     const req = makeRequest({ title: "テスト", hurdle: 1, time: 1 }); // desc 省略
@@ -59,7 +75,15 @@ describe("POST /api/actions", () => {
   });
 
   it("tags が省略されたときデフォルト空配列が設定される", async () => {
-    const created = { id: 1, userId: USER_ID, title: "テスト", desc: "", tags: [], hurdle: 1, time: 1 };
+    const created = {
+      id: 1,
+      userId: USER_ID,
+      title: "テスト",
+      desc: "",
+      tags: [],
+      hurdle: 1,
+      time: 1,
+    };
     mockPrisma.action.create.mockResolvedValue(created as never);
 
     const req = makeRequest({ title: "テスト", hurdle: 1, time: 1 }); // tags 省略
@@ -73,7 +97,15 @@ describe("POST /api/actions", () => {
   });
 
   it("userId が create データに含まれる", async () => {
-    const created = { id: 1, userId: USER_ID, title: "テスト", desc: "", tags: [], hurdle: 1, time: 1 };
+    const created = {
+      id: 1,
+      userId: USER_ID,
+      title: "テスト",
+      desc: "",
+      tags: [],
+      hurdle: 1,
+      time: 1,
+    };
     mockPrisma.action.create.mockResolvedValue(created as never);
 
     const req = makeRequest({ title: "テスト", hurdle: 1, time: 1 });

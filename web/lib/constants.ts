@@ -875,4 +875,3 @@ export const INITIAL_STATE: AppState = {
   doneActions: [],
   doneRewards: [],
 };
-

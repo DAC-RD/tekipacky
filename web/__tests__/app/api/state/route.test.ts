@@ -44,16 +44,49 @@ describe("GET /api/state", () => {
       createdAt: new Date(),
     } as never);
     mockPrisma.action.findMany.mockResolvedValue([
-      { id: 1, userId: USER_ID, title: "朝ごはん", desc: "", tags: [], hurdle: 1, time: 1 },
+      {
+        id: 1,
+        userId: USER_ID,
+        title: "朝ごはん",
+        desc: "",
+        tags: [],
+        hurdle: 1,
+        time: 1,
+      },
     ] as never);
     mockPrisma.reward.findMany.mockResolvedValue([
-      { id: 1, userId: USER_ID, title: "Netflix", desc: "", tags: [], satisfaction: 2, time: 2, price: 1 },
+      {
+        id: 1,
+        userId: USER_ID,
+        title: "Netflix",
+        desc: "",
+        tags: [],
+        satisfaction: 2,
+        time: 2,
+        price: 1,
+      },
     ] as never);
     mockPrisma.doneAction.findMany.mockResolvedValue([
-      { id: 1, actionId: 1, title: "朝ごはん", pt: 1, count: 1, date: "2024-01-15", userId: USER_ID },
+      {
+        id: 1,
+        actionId: 1,
+        title: "朝ごはん",
+        pt: 1,
+        count: 1,
+        date: "2024-01-15",
+        userId: USER_ID,
+      },
     ] as never);
     mockPrisma.doneReward.findMany.mockResolvedValue([
-      { id: 1, rewardId: 1, title: "Netflix", pt: 4, count: 1, date: "2024-01-15", userId: USER_ID },
+      {
+        id: 1,
+        rewardId: 1,
+        title: "Netflix",
+        pt: 4,
+        count: 1,
+        date: "2024-01-15",
+        userId: USER_ID,
+      },
     ] as never);
   });
 
@@ -100,8 +133,24 @@ describe("GET /api/state", () => {
 
   it("actionId が null の done アクションは除外される（削除済み行動）", async () => {
     mockPrisma.doneAction.findMany.mockResolvedValue([
-      { id: 1, actionId: 1, title: "存在する", pt: 1, count: 1, date: "2024-01-15", userId: USER_ID },
-      { id: 2, actionId: null, title: "削除済み", pt: 2, count: 1, date: "2024-01-15", userId: USER_ID },
+      {
+        id: 1,
+        actionId: 1,
+        title: "存在する",
+        pt: 1,
+        count: 1,
+        date: "2024-01-15",
+        userId: USER_ID,
+      },
+      {
+        id: 2,
+        actionId: null,
+        title: "削除済み",
+        pt: 2,
+        count: 1,
+        date: "2024-01-15",
+        userId: USER_ID,
+      },
     ] as never);
 
     const req = makeRequest();
@@ -114,8 +163,24 @@ describe("GET /api/state", () => {
 
   it("rewardId が null の done リワードは除外される（削除済みリワード）", async () => {
     mockPrisma.doneReward.findMany.mockResolvedValue([
-      { id: 1, rewardId: 1, title: "存在する", pt: 4, count: 1, date: "2024-01-15", userId: USER_ID },
-      { id: 2, rewardId: null, title: "削除済み", pt: 5, count: 1, date: "2024-01-15", userId: USER_ID },
+      {
+        id: 1,
+        rewardId: 1,
+        title: "存在する",
+        pt: 4,
+        count: 1,
+        date: "2024-01-15",
+        userId: USER_ID,
+      },
+      {
+        id: 2,
+        rewardId: null,
+        title: "削除済み",
+        pt: 5,
+        count: 1,
+        date: "2024-01-15",
+        userId: USER_ID,
+      },
     ] as never);
 
     const req = makeRequest();

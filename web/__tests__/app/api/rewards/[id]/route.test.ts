@@ -49,7 +49,12 @@ describe("PUT /api/rewards/[id]", () => {
     };
     mockPrisma.reward.update.mockResolvedValue(updated as never);
 
-    const req = makePutRequest("1", { title: "更新されたご褒美", satisfaction: 3, time: 2, price: 2 });
+    const req = makePutRequest("1", {
+      title: "更新されたご褒美",
+      satisfaction: 3,
+      time: 2,
+      price: 2,
+    });
     const res = await PUT(req, { params: Promise.resolve({ id: "1" }) });
     const json = await res.json();
 
@@ -59,10 +64,24 @@ describe("PUT /api/rewards/[id]", () => {
   });
 
   it("update の where に userId が含まれる（オーナーシップ確認）", async () => {
-    const updated = { id: 1, userId: USER_ID, title: "テスト", desc: "", tags: [], satisfaction: 1, time: 1, price: 1 };
+    const updated = {
+      id: 1,
+      userId: USER_ID,
+      title: "テスト",
+      desc: "",
+      tags: [],
+      satisfaction: 1,
+      time: 1,
+      price: 1,
+    };
     mockPrisma.reward.update.mockResolvedValue(updated as never);
 
-    const req = makePutRequest("1", { title: "テスト", satisfaction: 1, time: 1, price: 1 });
+    const req = makePutRequest("1", {
+      title: "テスト",
+      satisfaction: 1,
+      time: 1,
+      price: 1,
+    });
     await PUT(req, { params: Promise.resolve({ id: "1" }) });
 
     expect(mockPrisma.reward.update).toHaveBeenCalledWith(

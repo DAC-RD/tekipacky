@@ -3,7 +3,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useStore } from "@/hooks/useStore";
 import { FloatItem, Mode, SortOrder, Tab } from "@/lib/types";
-import { MODES } from "@/lib/constants";
 import { calcActionPt, calcRewardPt } from "@/lib/utils";
 import PointDisplay from "@/components/PointDisplay";
 import DoneAccordion from "@/components/DoneAccordion";
@@ -39,6 +38,7 @@ export default function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalInitialType, setModalInitialType] = useState<Tab>("action");
   const [modalEditId, setModalEditId] = useState<number | null>(null);
+  const [modalKey, setModalKey] = useState(0);
   const [flashKey, setFlashKey] = useState(0);
   const [floats, setFloats] = useState<FloatItem[]>([]);
   const [modeTooltipOpen, setModeTooltipOpen] = useState(false);
@@ -175,6 +175,7 @@ export default function Dashboard() {
     setModalInitialType(type);
     setModalEditId(editId);
     setModalOpen(true);
+    setModalKey((k) => k + 1);
   }
 
   async function handleModalSave(data: ModalSaveData) {
@@ -604,6 +605,7 @@ export default function Dashboard() {
 
       {/* Modal */}
       <ItemModal
+        key={modalKey}
         open={modalOpen}
         initialType={modalInitialType}
         editId={modalEditId}

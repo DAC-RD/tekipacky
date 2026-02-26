@@ -55,12 +55,16 @@ describe("PATCH /api/done/actions/[actionId]", () => {
   });
 
   it("delta=+1 で count が増加し user.points が increment される", async () => {
-    mockPrisma.doneAction.findUnique.mockResolvedValue(existingDoneAction as never);
+    mockPrisma.doneAction.findUnique.mockResolvedValue(
+      existingDoneAction as never,
+    );
     mockPrisma.doneAction.update.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
     const req = makeRequest("1", { delta: 1 });
-    const res = await PATCH(req, { params: Promise.resolve({ actionId: "1" }) });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ actionId: "1" }),
+    });
     const json = await res.json();
 
     expect(res.status).toBe(200);
@@ -76,7 +80,9 @@ describe("PATCH /api/done/actions/[actionId]", () => {
   });
 
   it("delta=-1 で count が減少する", async () => {
-    mockPrisma.doneAction.findUnique.mockResolvedValue(existingDoneAction as never); // count=2
+    mockPrisma.doneAction.findUnique.mockResolvedValue(
+      existingDoneAction as never,
+    ); // count=2
     mockPrisma.doneAction.update.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
@@ -110,7 +116,9 @@ describe("PATCH /api/done/actions/[actionId]", () => {
     mockPrisma.doneAction.findUnique.mockResolvedValue(null as never);
 
     const req = makeRequest("99", { delta: 1 });
-    const res = await PATCH(req, { params: Promise.resolve({ actionId: "99" }) });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ actionId: "99" }),
+    });
     const json = await res.json();
 
     expect(json.ok).toBe(true);

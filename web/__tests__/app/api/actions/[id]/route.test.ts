@@ -37,10 +37,24 @@ describe("PUT /api/actions/[id]", () => {
   });
 
   it("正常な更新でアクションが返される", async () => {
-    const updated = { id: 1, userId: USER_ID, title: "更新された行動", desc: "説明", tags: ["食事"], hurdle: 2, time: 3 };
+    const updated = {
+      id: 1,
+      userId: USER_ID,
+      title: "更新された行動",
+      desc: "説明",
+      tags: ["食事"],
+      hurdle: 2,
+      time: 3,
+    };
     mockPrisma.action.update.mockResolvedValue(updated as never);
 
-    const req = makePutRequest("1", { title: "更新された行動", desc: "説明", tags: ["食事"], hurdle: 2, time: 3 });
+    const req = makePutRequest("1", {
+      title: "更新された行動",
+      desc: "説明",
+      tags: ["食事"],
+      hurdle: 2,
+      time: 3,
+    });
     const res = await PUT(req, { params: Promise.resolve({ id: "1" }) });
     const json = await res.json();
 
@@ -50,7 +64,15 @@ describe("PUT /api/actions/[id]", () => {
   });
 
   it("update の where に userId が含まれる（オーナーシップ確認）", async () => {
-    const updated = { id: 1, userId: USER_ID, title: "テスト", desc: "", tags: [], hurdle: 1, time: 1 };
+    const updated = {
+      id: 1,
+      userId: USER_ID,
+      title: "テスト",
+      desc: "",
+      tags: [],
+      hurdle: 1,
+      time: 1,
+    };
     mockPrisma.action.update.mockResolvedValue(updated as never);
 
     const req = makePutRequest("1", { title: "テスト", hurdle: 1, time: 1 });
