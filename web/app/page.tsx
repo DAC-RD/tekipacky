@@ -12,13 +12,13 @@ export default async function Home({ searchParams }: Props) {
   const now = Date.now();
   const [session, params] = await Promise.all([auth(), searchParams]);
 
-  if (!session) return <LandingPage />;
+  if (!session?.user?.id) return <LandingPage />;
 
   // welcome=1 のときだけ DB で新規ユーザー判定（それ以外は余分なクエリを発行しない）
   let welcomeMessage: "new" | "returning" | null = null;
   if (params.welcome === "1") {
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: session.user.id! },
       select: { createdAt: true },
     });
     // 作成から 60 秒以内なら新規ユーザーとみなす
