@@ -1,6 +1,8 @@
 # API仕様
 
-全エンドポイントは `x-user-id` ヘッダーが必須（proxy.ts が自動注入）。
+アプリケーション API（`/api/actions`, `/api/rewards` 等）は全て `x-user-id` ヘッダーが必須。
+`proxy.ts`（Next.js Middleware）が JWT セッションを検証し、認証済みリクエストに自動注入する。
+未認証で `/api/**` にアクセスすると HTTP 401 が返る（`/api/auth/**` を除く）。
 
 ---
 
@@ -213,12 +215,28 @@ HTTP 400
 
 ---
 
+## 認証エンドポイント
+
+### `GET|POST /api/auth/[...nextauth]`
+
+NextAuth v5 が処理する認証エンドポイント。
+
+- `POST /api/auth/signin/resend` — Resend へのメール送信リクエスト
+- `GET /api/auth/callback/resend` — マジックリンクのコールバック処理
+- `POST /api/auth/signout` — サインアウト
+
+**注意:** このエンドポイント群はミドルウェアの認証チェックをスキップする。
+詳細は [authentication.md](./authentication.md) を参照。
+
+---
+
 ## 共通仕様
 
 | 項目 | 仕様 |
 |---|---|
-| 認証 | `x-user-id` ヘッダー（proxy.ts が注入） |
+| 認証 | NextAuth v5 JWT セッション。`proxy.ts` が検証し `x-user-id` ヘッダーを注入 |
 | Content-Type | `application/json` |
 | エラーレスポンス | `{ "error": "メッセージ" }` + HTTPステータス |
+| 未認証エラー | HTTP 401 `{ "error": "Unauthorized" }`（`/api/auth/**` を除く） |
 | オーナーシップ確認 | 全 WHERE 条件に `userId` を含める |
 | ポイント計算 | 常にサーバー側で計算（クライアント値不使用） |
