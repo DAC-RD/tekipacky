@@ -97,16 +97,30 @@ export default function ItemModal({
 }: Props) {
   const isEditMode = editId !== null;
 
+  const editAction =
+    initialType === "action" && editId !== null
+      ? actions.find((a) => a.id === editId)
+      : undefined;
+  const editReward =
+    initialType === "reward" && editId !== null
+      ? rewards.find((r) => r.id === editId)
+      : undefined;
+  const editItem = editAction ?? editReward;
+
   const [modalType, setModalType] = useState<Tab>(initialType);
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [title, setTitle] = useState(editItem?.title ?? "");
+  const [desc, setDesc] = useState(editItem?.desc ?? "");
+  const [tags, setTags] = useState<string[]>(
+    editItem ? [...editItem.tags] : [],
+  );
   const [tagInput, setTagInput] = useState("");
-  const [hurdle, setHurdle] = useState(1);
-  const [time, setTime] = useState(1);
-  const [satisfaction, setSatisfaction] = useState(1);
-  const [rewardTime, setRewardTime] = useState(1);
-  const [price, setPrice] = useState(1);
+  const [hurdle, setHurdle] = useState(editAction?.hurdle ?? 1);
+  const [time, setTime] = useState(editAction?.time ?? 1);
+  const [satisfaction, setSatisfaction] = useState(
+    editReward?.satisfaction ?? 1,
+  );
+  const [rewardTime, setRewardTime] = useState(editReward?.time ?? 1);
+  const [price, setPrice] = useState(editReward?.price ?? 1);
 
   // Scroll lock when modal is open
   useEffect(() => {
@@ -116,45 +130,6 @@ export default function ItemModal({
       document.body.style.overflow = "";
     };
   }, [open]);
-
-  // Reset form when modal opens
-  useEffect(() => {
-    if (!open) return;
-    setModalType(initialType);
-    setTagInput("");
-
-    if (editId !== null) {
-      if (initialType === "action") {
-        const item = actions.find((a) => a.id === editId);
-        if (item) {
-          setTitle(item.title);
-          setDesc(item.desc);
-          setTags([...item.tags]);
-          setHurdle(item.hurdle);
-          setTime(item.time);
-        }
-      } else {
-        const item = rewards.find((r) => r.id === editId);
-        if (item) {
-          setTitle(item.title);
-          setDesc(item.desc);
-          setTags([...item.tags]);
-          setSatisfaction(item.satisfaction);
-          setRewardTime(item.time);
-          setPrice(item.price);
-        }
-      }
-    } else {
-      setTitle("");
-      setDesc("");
-      setTags([]);
-      setHurdle(1);
-      setTime(1);
-      setSatisfaction(1);
-      setRewardTime(1);
-      setPrice(1);
-    }
-  }, [open, editId, initialType, actions, rewards]);
 
   if (!open) return null;
 

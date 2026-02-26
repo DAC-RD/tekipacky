@@ -48,9 +48,7 @@ export function useStore() {
 
   /** ご褒美を使用する。消費ptと残高不足フラグを返す */
   const completeReward = useCallback(
-    async (
-      id: number,
-    ): Promise<{ pt: number; insufficient: boolean }> => {
+    async (id: number): Promise<{ pt: number; insufficient: boolean }> => {
       const reward = state.rewards.find((r) => r.id === id);
       if (!reward) return { pt: 0, insufficient: false };
       const pt = calcRewardPt(
@@ -65,13 +63,7 @@ export function useStore() {
       setState((prev) => ({
         ...prev,
         points: prev.points - pt,
-        doneRewards: upsertDoneItem(
-          prev.doneRewards,
-          id,
-          reward.title,
-          pt,
-          1,
-        ),
+        doneRewards: upsertDoneItem(prev.doneRewards, id, reward.title, pt, 1),
       }));
 
       fetch("/api/done/rewards", {

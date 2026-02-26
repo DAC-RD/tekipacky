@@ -23,8 +23,9 @@ tekipacky/
 
 息切れしないよう小さく進める。まずローカルで動くUIを作り、DBや認証は後から追加していく。
 
-## 技術スタック（予定）
+## 技術スタック
 
 - フロントエンド: Next.js
 - データベース: PostgreSQL
-- ホスティング: AWS
+- ホスティング: RaspberryPi(CloudFlare Tunnel + Access)
+- CI/CD: GitHub Actions
