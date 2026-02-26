@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "../../../../../helpers/request";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -20,17 +20,6 @@ import { PATCH } from "@/app/api/done/rewards/[rewardId]/route";
 
 const mockPrisma = vi.mocked(prisma, true);
 const USER_ID = "test-user-123";
-
-function makeRequest(rewardId: string, body: unknown): NextRequest {
-  return new NextRequest(`http://localhost/api/done/rewards/${rewardId}`, {
-    method: "PATCH",
-    headers: {
-      "x-user-id": USER_ID,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-}
 
 const existingDoneReward = {
   id: 20,
@@ -61,7 +50,7 @@ describe("PATCH /api/done/rewards/[rewardId]", () => {
     mockPrisma.doneReward.update.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest("1", { delta: 1 });
+    const req = makeRequest("PATCH", "/api/done/rewards/1", { delta: 1 });
     const res = await PATCH(req, {
       params: Promise.resolve({ rewardId: "1" }),
     });
@@ -86,7 +75,7 @@ describe("PATCH /api/done/rewards/[rewardId]", () => {
     mockPrisma.doneReward.update.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest("1", { delta: -1 });
+    const req = makeRequest("PATCH", "/api/done/rewards/1", { delta: -1 });
     await PATCH(req, { params: Promise.resolve({ rewardId: "1" }) });
 
     // count: 2 - 1 = 1
@@ -107,7 +96,7 @@ describe("PATCH /api/done/rewards/[rewardId]", () => {
     mockPrisma.doneReward.delete.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest("1", { delta: -1 });
+    const req = makeRequest("PATCH", "/api/done/rewards/1", { delta: -1 });
     await PATCH(req, { params: Promise.resolve({ rewardId: "1" }) });
 
     expect(mockPrisma.doneReward.delete).toHaveBeenCalledWith(
@@ -119,7 +108,7 @@ describe("PATCH /api/done/rewards/[rewardId]", () => {
   it("doneReward が存在しない場合は { ok: true } を返す", async () => {
     mockPrisma.doneReward.findUnique.mockResolvedValue(null as never);
 
-    const req = makeRequest("99", { delta: 1 });
+    const req = makeRequest("PATCH", "/api/done/rewards/99", { delta: 1 });
     const res = await PATCH(req, {
       params: Promise.resolve({ rewardId: "99" }),
     });

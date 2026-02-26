@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "../../../../helpers/request";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -21,21 +21,6 @@ import { POST } from "@/app/api/done/rewards/route";
 
 const mockPrisma = vi.mocked(prisma, true);
 const USER_ID = "test-user-123";
-
-function makeRequest(
-  body: unknown,
-  extraHeaders?: Record<string, string>,
-): NextRequest {
-  return new NextRequest("http://localhost/api/done/rewards", {
-    method: "POST",
-    headers: {
-      "x-user-id": USER_ID,
-      "Content-Type": "application/json",
-      ...extraHeaders,
-    },
-    body: JSON.stringify(body),
-  });
-}
 
 const mockReward = {
   id: 1,
@@ -73,7 +58,7 @@ describe("POST /api/done/rewards", () => {
     } as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest({ rewardId: 1 });
+    const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
     const res = await POST(req);
     const json = await res.json();
 
@@ -92,7 +77,7 @@ describe("POST /api/done/rewards", () => {
     } as never);
     mockPrisma.reward.findUniqueOrThrow.mockResolvedValue(mockReward as never);
 
-    const req = makeRequest({ rewardId: 1 });
+    const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
     const res = await POST(req);
 
     expect(res.status).toBe(400);
@@ -108,7 +93,7 @@ describe("POST /api/done/rewards", () => {
     } as never);
     mockPrisma.reward.findUniqueOrThrow.mockResolvedValue(mockReward as never);
 
-    const req = makeRequest({ rewardId: 1 });
+    const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
     const res = await POST(req);
     const json = await res.json();
 
@@ -125,7 +110,7 @@ describe("POST /api/done/rewards", () => {
     } as never);
     mockPrisma.reward.findUniqueOrThrow.mockResolvedValue(mockReward as never);
 
-    const req = makeRequest({ rewardId: 1 });
+    const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
     await POST(req);
 
     expect(mockPrisma.doneReward.upsert).not.toHaveBeenCalled();
@@ -157,7 +142,7 @@ describe("POST /api/done/rewards", () => {
     } as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest({ rewardId: 1 });
+    const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
     await POST(req);
 
     expect(mockPrisma.doneReward.upsert).toHaveBeenCalledWith(
@@ -187,7 +172,7 @@ describe("POST /api/done/rewards", () => {
     } as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest({ rewardId: 1 });
+    const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
     await POST(req);
 
     expect(mockPrisma.user.update).toHaveBeenCalledWith(

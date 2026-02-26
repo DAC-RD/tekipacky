@@ -109,7 +109,19 @@
 
 ## 次スプリントへの課題（持ち越し候補）
 
+### 機能追加
+
 - [ ] 過去のポイント推移・行動統計ページ
 - [ ] メールアドレスの変更機能
 - [ ] アカウント削除機能
 - [ ] Google / GitHub 等の OAuth ログイン追加
+
+### リファクタリング（技術的負債）
+
+- [ ] Dashboard コンポーネントの分割（700行 → ModeSelector, WelcomeToast, ItemCard, ActionCardList, RewardCardList）
+- [ ] filteredActions / filteredRewards の共通化（`useFilteredItems` カスタムフック）
+- [ ] ItemModal の責務分離（ActionForm / RewardForm コンポーネント化、`useTagManager` フック）
+- [ ] テストの `as never` → 適切な Prisma 型定義（`satisfies` 使用）
+- [ ] Dashboard のインラインスタイル → CSS クラス化（`.action-tag`, `.reward-tag`, `.welcome-toast` 等）
+- [ ] useStore のエラーハンドリング強化（saveItem / deleteItem の失敗時 UI 通知）
+- [ ] done 操作ロジックの共通化（DoneAction / DoneReward の upsert・count 変更を `lib/done.ts` に集約）

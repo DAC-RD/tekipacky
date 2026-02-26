@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
-import { calcRewardPt, getDateForTimezone, modeFromDb } from "@/lib/utils";
+import {
+  calcRewardPt,
+  getDateForTimezone,
+  modeFromDb,
+  toDoneItemResponse,
+} from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
   const userId = getUserId(req);
@@ -51,11 +56,5 @@ export async function POST(req: NextRequest) {
     data: { points: { decrement: pt } },
   });
 
-  return NextResponse.json({
-    id: done.rewardId,
-    title: done.title,
-    pt: done.pt,
-    count: done.count,
-    completedAt: done.date,
-  });
+  return NextResponse.json(toDoneItemResponse(done));
 }

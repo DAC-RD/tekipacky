@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "../../../helpers/request";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -14,17 +14,6 @@ import { POST } from "@/app/api/rewards/route";
 
 const mockPrisma = vi.mocked(prisma, true);
 const USER_ID = "test-user-123";
-
-function makeRequest(body: unknown): NextRequest {
-  return new NextRequest("http://localhost/api/rewards", {
-    method: "POST",
-    headers: {
-      "x-user-id": USER_ID,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-}
 
 describe("POST /api/rewards", () => {
   beforeEach(() => {
@@ -44,7 +33,7 @@ describe("POST /api/rewards", () => {
     };
     mockPrisma.reward.create.mockResolvedValue(created as never);
 
-    const req = makeRequest({
+    const req = makeRequest("POST", "/api/rewards", {
       title: "Netflixを見る",
       satisfaction: 2,
       time: 2,
@@ -71,7 +60,7 @@ describe("POST /api/rewards", () => {
     };
     mockPrisma.reward.create.mockResolvedValue(created as never);
 
-    const req = makeRequest({
+    const req = makeRequest("POST", "/api/rewards", {
       title: "テスト",
       satisfaction: 1,
       time: 1,
@@ -99,7 +88,7 @@ describe("POST /api/rewards", () => {
     };
     mockPrisma.reward.create.mockResolvedValue(created as never);
 
-    const req = makeRequest({
+    const req = makeRequest("POST", "/api/rewards", {
       title: "テスト",
       satisfaction: 1,
       time: 1,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "../../../helpers/request";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -15,17 +15,6 @@ import { PATCH } from "@/app/api/user/route";
 const mockPrisma = vi.mocked(prisma, true);
 const USER_ID = "test-user-123";
 
-function makeRequest(body: unknown): NextRequest {
-  return new NextRequest("http://localhost/api/user", {
-    method: "PATCH",
-    headers: {
-      "x-user-id": USER_ID,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-}
-
 describe("PATCH /api/user", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -33,7 +22,7 @@ describe("PATCH /api/user", () => {
   });
 
   it("正常なモード変更で { ok: true } が返される", async () => {
-    const req = makeRequest({ mode: "hard" });
+    const req = makeRequest("PATCH", "/api/user", { mode: "hard" });
     const res = await PATCH(req);
     const json = await res.json();
 
@@ -42,7 +31,7 @@ describe("PATCH /api/user", () => {
   });
 
   it("easy モードに変更するとき EASY が DB に書き込まれる", async () => {
-    const req = makeRequest({ mode: "easy" });
+    const req = makeRequest("PATCH", "/api/user", { mode: "easy" });
     await PATCH(req);
 
     expect(mockPrisma.user.update).toHaveBeenCalledWith(
@@ -53,7 +42,7 @@ describe("PATCH /api/user", () => {
   });
 
   it("normal モードに変更するとき NORMAL が DB に書き込まれる", async () => {
-    const req = makeRequest({ mode: "normal" });
+    const req = makeRequest("PATCH", "/api/user", { mode: "normal" });
     await PATCH(req);
 
     expect(mockPrisma.user.update).toHaveBeenCalledWith(
@@ -64,7 +53,7 @@ describe("PATCH /api/user", () => {
   });
 
   it("hard モードに変更するとき HARD が DB に書き込まれる", async () => {
-    const req = makeRequest({ mode: "hard" });
+    const req = makeRequest("PATCH", "/api/user", { mode: "hard" });
     await PATCH(req);
 
     expect(mockPrisma.user.update).toHaveBeenCalledWith(
@@ -75,7 +64,7 @@ describe("PATCH /api/user", () => {
   });
 
   it("userId が where 条件に含まれる", async () => {
-    const req = makeRequest({ mode: "normal" });
+    const req = makeRequest("PATCH", "/api/user", { mode: "normal" });
     await PATCH(req);
 
     expect(mockPrisma.user.update).toHaveBeenCalledWith(

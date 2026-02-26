@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "../../../../../helpers/request";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -20,17 +20,6 @@ import { PATCH } from "@/app/api/done/actions/[actionId]/route";
 
 const mockPrisma = vi.mocked(prisma, true);
 const USER_ID = "test-user-123";
-
-function makeRequest(actionId: string, body: unknown): NextRequest {
-  return new NextRequest(`http://localhost/api/done/actions/${actionId}`, {
-    method: "PATCH",
-    headers: {
-      "x-user-id": USER_ID,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-}
 
 const existingDoneAction = {
   id: 10,
@@ -61,7 +50,7 @@ describe("PATCH /api/done/actions/[actionId]", () => {
     mockPrisma.doneAction.update.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest("1", { delta: 1 });
+    const req = makeRequest("PATCH", "/api/done/actions/1", { delta: 1 });
     const res = await PATCH(req, {
       params: Promise.resolve({ actionId: "1" }),
     });
@@ -86,7 +75,7 @@ describe("PATCH /api/done/actions/[actionId]", () => {
     mockPrisma.doneAction.update.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest("1", { delta: -1 });
+    const req = makeRequest("PATCH", "/api/done/actions/1", { delta: -1 });
     await PATCH(req, { params: Promise.resolve({ actionId: "1" }) });
 
     // count: 2 - 1 = 1 → update
@@ -103,7 +92,7 @@ describe("PATCH /api/done/actions/[actionId]", () => {
     mockPrisma.doneAction.delete.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest("1", { delta: -1 });
+    const req = makeRequest("PATCH", "/api/done/actions/1", { delta: -1 });
     await PATCH(req, { params: Promise.resolve({ actionId: "1" }) });
 
     expect(mockPrisma.doneAction.delete).toHaveBeenCalledWith(
@@ -115,7 +104,7 @@ describe("PATCH /api/done/actions/[actionId]", () => {
   it("doneAction が存在しない場合は { ok: true } を返す", async () => {
     mockPrisma.doneAction.findUnique.mockResolvedValue(null as never);
 
-    const req = makeRequest("99", { delta: 1 });
+    const req = makeRequest("PATCH", "/api/done/actions/99", { delta: 1 });
     const res = await PATCH(req, {
       params: Promise.resolve({ actionId: "99" }),
     });
@@ -134,7 +123,7 @@ describe("PATCH /api/done/actions/[actionId]", () => {
     mockPrisma.doneAction.update.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest("1", { delta: 1 });
+    const req = makeRequest("PATCH", "/api/done/actions/1", { delta: 1 });
     await PATCH(req, { params: Promise.resolve({ actionId: "1" }) });
 
     // DB の pt=8 で計算される

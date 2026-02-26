@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "../../../../helpers/request";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -15,21 +15,6 @@ import { PUT, DELETE } from "@/app/api/rewards/[id]/route";
 
 const mockPrisma = vi.mocked(prisma, true);
 const USER_ID = "test-user-123";
-
-function makePutRequest(id: string, body: unknown): NextRequest {
-  return new NextRequest(`http://localhost/api/rewards/${id}`, {
-    method: "PUT",
-    headers: { "x-user-id": USER_ID, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-function makeDeleteRequest(id: string): NextRequest {
-  return new NextRequest(`http://localhost/api/rewards/${id}`, {
-    method: "DELETE",
-    headers: { "x-user-id": USER_ID },
-  });
-}
 
 describe("PUT /api/rewards/[id]", () => {
   beforeEach(() => {
@@ -49,7 +34,7 @@ describe("PUT /api/rewards/[id]", () => {
     };
     mockPrisma.reward.update.mockResolvedValue(updated as never);
 
-    const req = makePutRequest("1", {
+    const req = makeRequest("PUT", "/api/rewards/1", {
       title: "更新されたご褒美",
       satisfaction: 3,
       time: 2,
@@ -76,7 +61,7 @@ describe("PUT /api/rewards/[id]", () => {
     };
     mockPrisma.reward.update.mockResolvedValue(updated as never);
 
-    const req = makePutRequest("1", {
+    const req = makeRequest("PUT", "/api/rewards/1", {
       title: "テスト",
       satisfaction: 1,
       time: 1,
@@ -100,7 +85,7 @@ describe("DELETE /api/rewards/[id]", () => {
   it("正常な削除で { ok: true } が返される", async () => {
     mockPrisma.reward.delete.mockResolvedValue({} as never);
 
-    const req = makeDeleteRequest("1");
+    const req = makeRequest("DELETE", "/api/rewards/1");
     const res = await DELETE(req, { params: Promise.resolve({ id: "1" }) });
     const json = await res.json();
 
@@ -111,7 +96,7 @@ describe("DELETE /api/rewards/[id]", () => {
   it("delete の where に userId が含まれる（オーナーシップ確認）", async () => {
     mockPrisma.reward.delete.mockResolvedValue({} as never);
 
-    const req = makeDeleteRequest("5");
+    const req = makeRequest("DELETE", "/api/rewards/5");
     await DELETE(req, { params: Promise.resolve({ id: "5" }) });
 
     expect(mockPrisma.reward.delete).toHaveBeenCalledWith(

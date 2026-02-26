@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { makeRequest } from "../../../../helpers/request";
 
 // Prisma をモック（DB接続なしでテスト）
 vi.mock("@/lib/prisma", () => ({
@@ -23,17 +24,6 @@ import { POST } from "@/app/api/done/actions/route";
 const mockPrisma = vi.mocked(prisma, true);
 
 const USER_ID = "test-user-123";
-
-function makeRequest(body: unknown): NextRequest {
-  return new NextRequest("http://localhost/api/done/actions", {
-    method: "POST",
-    headers: {
-      "x-user-id": USER_ID,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-}
 
 describe("POST /api/done/actions", () => {
   beforeEach(() => {
@@ -68,7 +58,7 @@ describe("POST /api/done/actions", () => {
     } as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest({ actionId: 1 });
+    const req = makeRequest("POST", "/api/done/actions", { actionId: 1 });
     const res = await POST(req);
     const json = await res.json();
 
@@ -107,7 +97,7 @@ describe("POST /api/done/actions", () => {
     } as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest({ actionId: 1 });
+    const req = makeRequest("POST", "/api/done/actions", { actionId: 1 });
     const res = await POST(req);
     const json = await res.json();
 
@@ -142,7 +132,7 @@ describe("POST /api/done/actions", () => {
     } as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest({ actionId: 1 });
+    const req = makeRequest("POST", "/api/done/actions", { actionId: 1 });
     await POST(req);
 
     // upsert の create.pt がサーバー計算値
@@ -181,7 +171,7 @@ describe("POST /api/done/actions", () => {
     } as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
-    const req = makeRequest({ actionId: 1 });
+    const req = makeRequest("POST", "/api/done/actions", { actionId: 1 });
     await POST(req);
 
     expect(mockPrisma.user.update).toHaveBeenCalledWith(
