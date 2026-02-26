@@ -6,6 +6,7 @@ import {
   modeFromDb,
   toActionResponse,
   toRewardResponse,
+  toDoneItemResponse,
 } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
@@ -29,24 +30,12 @@ export async function GET(req: NextRequest) {
     mode: modeFromDb(user.mode),
     actions: actions.map(toActionResponse),
     rewards: rewards.map(toRewardResponse),
-    // actionId が null（行動削除済み）のものは除外
+    // actionId/rewardId が null（削除済み）のものは除外
     doneActions: doneActions
       .filter((d) => d.actionId !== null)
-      .map((d) => ({
-        id: d.actionId!,
-        title: d.title,
-        pt: d.pt,
-        count: d.count,
-        completedAt: d.date,
-      })),
+      .map(toDoneItemResponse),
     doneRewards: doneRewards
       .filter((d) => d.rewardId !== null)
-      .map((d) => ({
-        id: d.rewardId!,
-        title: d.title,
-        pt: d.pt,
-        count: d.count,
-        completedAt: d.date,
-      })),
+      .map(toDoneItemResponse),
   });
 }

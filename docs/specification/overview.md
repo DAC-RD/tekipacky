@@ -16,6 +16,7 @@
 | UI | React 19, Tailwind CSS v4 |
 | データベース | PostgreSQL + Prisma 7 |
 | DBドライバ | `@prisma/adapter-pg` + `pg` |
+| 認証 | NextAuth v5 (next-auth@beta) + Resend |
 | 単体テスト | Vitest 4 + @testing-library/react |
 | E2Eテスト | Playwright |
 | 実行環境 | Docker Compose |
@@ -43,11 +44,17 @@ web/
 │   │   │       └── [rewardId]/route.ts   # PATCH（回数調整）
 │   │   ├── state/route.ts        # GET（全状態取得）
 │   │   └── user/route.ts         # PATCH（ユーザー設定更新）
+│   ├── api/
+│   │   └── auth/[...nextauth]/route.ts  # NextAuth ハンドラ（GET / POST）
 │   ├── generated/prisma/         # 自動生成Prismaクライアント
 │   ├── layout.tsx                # ルートレイアウト（フォント設定）
-│   └── page.tsx                  # メインページ（Dashboardをレンダリング）
+│   ├── page.tsx                  # ルートページ（認証状態で LandingPage / Dashboard を振り分け）
+│   ├── signin/
+│   │   ├── page.tsx              # メールアドレス入力・マジックリンク送信
+│   │   └── verify/page.tsx       # メール送信完了・確認画面
 ├── components/                   # Reactコンポーネント
 │   ├── Dashboard.tsx             # メインUIコンテナ（状態管理・ルーティング）
+│   ├── LandingPage.tsx           # 未認証ユーザー向けランディングページ
 │   ├── PointDisplay.tsx          # ポイント表示（フラッシュアニメーション付き）
 │   ├── FilterArea.tsx            # 検索・ソート・タグフィルター
 │   ├── ItemModal.tsx             # 行動・ご褒美の追加・編集モーダル
@@ -59,6 +66,7 @@ web/
 │   ├── constants.ts              # モード設定・デフォルトデータ（50行動・50ご褒美）
 │   ├── utils.ts                  # ポイント計算・ユーティリティ関数
 │   ├── user.ts                   # ユーザーID抽出（ヘッダーから）
+│   ├── auth.ts                   # NextAuth 初期化（Resend Provider・PrismaAdapter）
 │   └── prisma.ts                 # Prismaクライアントシングルトン
 ├── prisma/
 │   ├── schema.prisma             # DBスキーマ
@@ -69,25 +77,31 @@ web/
 │   ├── components/               # コンポーネントテスト
 │   ├── hooks/                    # カスタムフックテスト
 │   └── app/api/                  # APIルートテスト
+├── auth.config.ts                # Edge Runtime 用 Auth.js 設定（Prisma 非依存）
 ├── vitest.config.ts              # Vitestの設定
 ├── vitest.setup.ts               # テスト環境セットアップ
-└── proxy.ts                      # ミドルウェア（ユーザーセッション管理）
+└── proxy.ts                      # Next.js Middleware（JWT認証・x-user-idヘッダー注入）
 ```
 
 ---
 
-## ユーザーセッション管理
+## 認証・セッション管理
 
-`proxy.ts`（Next.js Middleware）が担当。
+**NextAuth v5（Auth.js）+ Resend** によるメールマジックリンク認証を採用。
 
-- 全 `/api/*` リクエストに `x-user-id` ヘッダーを注入
-- httpOnly セキュアクッキー（有効期限365日）でユーザーIDを永続化
-- 初回アクセス時にDBユーザーを自動作成
-- 各APIルートは `getUserId(req)` でヘッダーからユーザーIDを取得
+- 未認証ユーザーは `LandingPage` を表示（`/signin` でメール送信 → マジックリンクでログイン）
+- `proxy.ts`（Next.js Middleware）が Edge Runtime で JWT を検証し、認証済みリクエストに `x-user-id` ヘッダーを注入
+- `/api/auth/**` は NextAuth が処理するためミドルウェアをスルー
+- 未認証で `/api/**` にアクセスすると HTTP 401 を返す
+- 各 API ルートは `getUserId(req)` でヘッダーからユーザー ID を取得（変更なし）
 
 ```
-ブラウザ → proxy.ts（cookie確認・x-user-idヘッダー注入）→ APIルート
+ブラウザ → proxy.ts（JWT検証 + x-user-idヘッダー注入）→ APIルート
+未認証アクセス → proxy.ts → 401 Unauthorized
+未認証ページ → app/page.tsx（auth()呼び出し）→ LandingPage
 ```
+
+詳細は [authentication.md](./authentication.md) を参照。
 
 ---
 

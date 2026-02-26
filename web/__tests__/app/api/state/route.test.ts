@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "../../../helpers/request";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -26,12 +26,6 @@ import { GET } from "@/app/api/state/route";
 
 const mockPrisma = vi.mocked(prisma, true);
 const USER_ID = "test-user-123";
-
-function makeRequest(): NextRequest {
-  return new NextRequest("http://localhost/api/state", {
-    headers: { "x-user-id": USER_ID },
-  });
-}
 
 describe("GET /api/state", () => {
   beforeEach(() => {
@@ -91,7 +85,7 @@ describe("GET /api/state", () => {
   });
 
   it("ユーザーの全状態が返される", async () => {
-    const req = makeRequest();
+    const req = makeRequest("GET", "/api/state");
     const res = await GET(req);
     const json = await res.json();
 
@@ -105,7 +99,7 @@ describe("GET /api/state", () => {
   });
 
   it("mode が DB enum から frontend 型に変換される", async () => {
-    const req = makeRequest();
+    const req = makeRequest("GET", "/api/state");
     const res = await GET(req);
     const json = await res.json();
 
@@ -113,7 +107,7 @@ describe("GET /api/state", () => {
   });
 
   it("actions が正しく返される", async () => {
-    const req = makeRequest();
+    const req = makeRequest("GET", "/api/state");
     const res = await GET(req);
     const json = await res.json();
 
@@ -122,7 +116,7 @@ describe("GET /api/state", () => {
   });
 
   it("doneActions が正しく返される", async () => {
-    const req = makeRequest();
+    const req = makeRequest("GET", "/api/state");
     const res = await GET(req);
     const json = await res.json();
 
@@ -153,7 +147,7 @@ describe("GET /api/state", () => {
       },
     ] as never);
 
-    const req = makeRequest();
+    const req = makeRequest("GET", "/api/state");
     const res = await GET(req);
     const json = await res.json();
 
@@ -183,7 +177,7 @@ describe("GET /api/state", () => {
       },
     ] as never);
 
-    const req = makeRequest();
+    const req = makeRequest("GET", "/api/state");
     const res = await GET(req);
     const json = await res.json();
 
@@ -200,7 +194,7 @@ describe("GET /api/state", () => {
       createdAt: new Date(),
     } as never);
 
-    const req = makeRequest();
+    const req = makeRequest("GET", "/api/state");
     const res = await GET(req);
     const json = await res.json();
 

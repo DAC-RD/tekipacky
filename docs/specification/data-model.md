@@ -8,13 +8,14 @@ Prismaスキーマ（`web/prisma/schema.prisma`）に基づくデータモデル
 
 ```
 User
- ├── Action[]        (1:N)
- ├── Reward[]        (1:N)
- ├── DoneAction[]    (1:N)
- └── DoneReward[]    (1:N)
+ ├── Action[]         (1:N) ─→ DoneAction  (1:N, nullable)
+ ├── Reward[]         (1:N) ─→ DoneReward  (1:N, nullable)
+ ├── DoneAction[]     (1:N)
+ ├── DoneReward[]     (1:N)
+ ├── Account[]        (1:N) ← NextAuth 認証アカウント
+ └── Session[]        (1:N) ← NextAuth セッション（JWT戦略では実質不使用）
 
-Action ──→ DoneAction  (1:N, nullable)
-Reward ──→ DoneReward  (1:N, nullable)
+VerificationToken  ← NextAuth メールマジックリンクトークン（UserとのFK無し）
 ```
 
 ---
@@ -26,14 +27,61 @@ Reward ──→ DoneReward  (1:N, nullable)
 | カラム | 型 | デフォルト | 説明 |
 |---|---|---|---|
 | `id` | String (CUID) | 自動生成 | プライマリキー |
+| `name` | String? | null | 表示名（NextAuth 標準フィールド、未使用） |
+| `email` | String? @unique | null | メールアドレス（Resend 認証で使用） |
+| `emailVerified` | DateTime? | null | メール確認日時（NextAuth 管理） |
 | `timezone` | String | `"Asia/Tokyo"` | タイムゾーン（IANA形式） |
 | `points` | Int | `0` | 現在のポイント残高 |
 | `mode` | Enum (Mode) | `NORMAL` | 難易度モード |
 | `createdAt` | DateTime | now() | 作成日時 |
+| `updatedAt` | DateTime | 自動更新 | 更新日時 |
 
-**リレーション:** actions, rewards, doneActions, doneRewards（全てカスケード削除）
+**リレーション:** actions, rewards, doneActions, doneRewards（全てカスケード削除）、accounts, sessions（NextAuth 用、カスケード削除）
 
-**セッション:** httpOnly クッキーにIDを保存。proxy.ts が生成・管理。
+**認証:** NextAuth v5 + Resend によるメールマジックリンク認証。JWT セッション戦略を採用。
+
+---
+
+### Account（認証アカウント）
+
+NextAuth の PrismaAdapter が管理する標準テーブル。
+
+| カラム | 型 | 説明 |
+|---|---|---|
+| `userId` | String | ユーザーFK |
+| `type` | String | プロバイダー種別（"email" 等） |
+| `provider` | String | プロバイダー名（"resend" 等） |
+| `providerAccountId` | String | プロバイダー側のアカウントID |
+| `createdAt` | DateTime | 作成日時 |
+| `updatedAt` | DateTime | 更新日時 |
+
+**プライマリキー:** `(provider, providerAccountId)`
+
+---
+
+### Session（セッション）
+
+NextAuth の PrismaAdapter が管理する標準テーブル。JWT 戦略を採用しているため実質的には未使用。
+
+| カラム | 型 | 説明 |
+|---|---|---|
+| `sessionToken` | String @unique | セッショントークン |
+| `userId` | String | ユーザーFK |
+| `expires` | DateTime | 有効期限 |
+
+---
+
+### VerificationToken（メール検証トークン）
+
+マジックリンク認証のトークン管理。User との FK はなく、NextAuth が自動管理する。
+
+| カラム | 型 | 説明 |
+|---|---|---|
+| `identifier` | String | 識別子（メールアドレス等） |
+| `token` | String | 検証トークン |
+| `expires` | DateTime | 有効期限（デフォルト 24時間） |
+
+**プライマリキー:** `(identifier, token)`
 
 ---
 

@@ -53,24 +53,43 @@ const mockPrisma = vi.mocked(prisma, true);
 
 ## パターン1: リクエストの作成
 
-```typescript
-const USER_ID = "test-user-123";
+APIルートテストでは共通ヘルパー `makeRequest` を使用する。
 
-function makeRequest(body: unknown): NextRequest {
-  return new NextRequest("http://localhost/api/done/actions", {
-    method: "POST",
-    headers: {
-      "x-user-id": USER_ID,               // proxy が注入するヘッダー
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+```typescript
+// __tests__/helpers/request.ts から import
+import { makeRequest } from "../../../helpers/request";
+
+// 使い方: makeRequest(method, url, body?, userId?, extraHeaders?)
+const req = makeRequest("POST", "/api/done/actions", { actionId: 1 });
+const reqGet = makeRequest("GET", "/api/state");
+const reqOther = makeRequest("PATCH", "/api/user", { mode: "hard" }, "other-user-id");
+```
+
+**ヘルパーの実装** (`web/__tests__/helpers/request.ts`):
+```typescript
+import { NextRequest } from "next/server";
+
+export function makeRequest(
+  method: string,
+  url: string,
+  body?: unknown,
+  userId = "test-user-123",
+  extraHeaders?: Record<string, string>,
+): NextRequest {
+  const headers: Record<string, string> = { "x-user-id": userId, ...extraHeaders };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  return new NextRequest(`http://localhost${url}`, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 }
 ```
 
 **ポイント:**
-- `new NextRequest()` でNext.jsのリクエストを作成できる
-- `x-user-id` ヘッダーは proxy.ts が注入するため、テストでは手動でセット
+- `x-user-id` ヘッダーは proxy.ts が注入するため、テストではヘルパーが自動でセット
+- `body` が `undefined` の場合は `Content-Type` を付与しない（GET リクエスト等）
+- `x-user-id` なしのエラーケースのみ `new NextRequest()` を直接使用する
 
 ---
 
@@ -203,7 +222,7 @@ it("ポイント不足のとき doneReward.upsert が呼ばれない", async () 
 it("delete の where に userId が含まれる", async () => {
   mockPrisma.action.delete.mockResolvedValue({} as never);
 
-  const req = makeDeleteRequest("42");
+  const req = makeRequest("DELETE", "/api/actions/42");
   await DELETE(req, { params: Promise.resolve({ id: "42" }) });
 
   expect(mockPrisma.action.delete).toHaveBeenCalledWith(
@@ -244,7 +263,7 @@ it("actionId が null の doneAction は除外される", async () => {
     { id: 2, actionId: null, title: "削除済み", pt: 2, count: 1, date: "...", userId: USER_ID },
   ] as never);
 
-  const req = makeRequest();
+  const req = makeRequest("GET", "/api/state");
   const res = await GET(req);
   const json = await res.json();
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "../../../helpers/request";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -14,17 +14,6 @@ import { POST } from "@/app/api/actions/route";
 
 const mockPrisma = vi.mocked(prisma, true);
 const USER_ID = "test-user-123";
-
-function makeRequest(body: unknown): NextRequest {
-  return new NextRequest("http://localhost/api/actions", {
-    method: "POST",
-    headers: {
-      "x-user-id": USER_ID,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-}
 
 describe("POST /api/actions", () => {
   beforeEach(() => {
@@ -43,7 +32,11 @@ describe("POST /api/actions", () => {
     };
     mockPrisma.action.create.mockResolvedValue(created as never);
 
-    const req = makeRequest({ title: "朝ごはんを食べる", hurdle: 1, time: 1 });
+    const req = makeRequest("POST", "/api/actions", {
+      title: "朝ごはんを食べる",
+      hurdle: 1,
+      time: 1,
+    });
     const res = await POST(req);
     const json = await res.json();
 
@@ -64,7 +57,11 @@ describe("POST /api/actions", () => {
     };
     mockPrisma.action.create.mockResolvedValue(created as never);
 
-    const req = makeRequest({ title: "テスト", hurdle: 1, time: 1 }); // desc 省略
+    const req = makeRequest("POST", "/api/actions", {
+      title: "テスト",
+      hurdle: 1,
+      time: 1,
+    }); // desc 省略
     await POST(req);
 
     expect(mockPrisma.action.create).toHaveBeenCalledWith(
@@ -86,7 +83,11 @@ describe("POST /api/actions", () => {
     };
     mockPrisma.action.create.mockResolvedValue(created as never);
 
-    const req = makeRequest({ title: "テスト", hurdle: 1, time: 1 }); // tags 省略
+    const req = makeRequest("POST", "/api/actions", {
+      title: "テスト",
+      hurdle: 1,
+      time: 1,
+    }); // tags 省略
     await POST(req);
 
     expect(mockPrisma.action.create).toHaveBeenCalledWith(
@@ -108,7 +109,11 @@ describe("POST /api/actions", () => {
     };
     mockPrisma.action.create.mockResolvedValue(created as never);
 
-    const req = makeRequest({ title: "テスト", hurdle: 1, time: 1 });
+    const req = makeRequest("POST", "/api/actions", {
+      title: "テスト",
+      hurdle: 1,
+      time: 1,
+    });
     await POST(req);
 
     expect(mockPrisma.action.create).toHaveBeenCalledWith(

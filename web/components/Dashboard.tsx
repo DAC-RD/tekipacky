@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { signOut } from "next-auth/react";
 import { useStore } from "@/hooks/useStore";
 import { FloatItem, Mode, SortOrder, Tab } from "@/lib/types";
 import { calcActionPt, calcRewardPt } from "@/lib/utils";
@@ -9,7 +10,11 @@ import DoneAccordion from "@/components/DoneAccordion";
 import FilterArea from "@/components/FilterArea";
 import ItemModal, { ModalSaveData } from "@/components/ItemModal";
 
-export default function Dashboard() {
+interface DashboardProps {
+  welcomeMessage?: "new" | "returning" | null;
+}
+
+export default function Dashboard({ welcomeMessage }: DashboardProps) {
   const {
     state,
     hydrated,
@@ -43,6 +48,22 @@ export default function Dashboard() {
   const [floats, setFloats] = useState<FloatItem[]>([]);
   const [modeTooltipOpen, setModeTooltipOpen] = useState(false);
   const floatIdRef = useRef(0);
+
+  // ログイン後トースト
+  const [welcomeToast, setWelcomeToast] = useState<string | null>(
+    welcomeMessage === "new"
+      ? "アカウントを作成しました"
+      : welcomeMessage === "returning"
+        ? "ログインしました"
+        : null,
+  );
+  useEffect(() => {
+    if (!welcomeToast) return;
+    // URL から ?welcome=1 を除去
+    window.history.replaceState({}, "", "/");
+    const timer = setTimeout(() => setWelcomeToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [welcomeToast]);
 
   // Computed
   const todayEarned = state.doneActions.reduce(
@@ -208,6 +229,31 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 md:py-10">
+      {/* ログイン後トースト */}
+      {welcomeToast && (
+        <div
+          style={{
+            position: "fixed",
+            top: 20,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "var(--surface)",
+            border: "1.5px solid var(--accent)",
+            borderRadius: 12,
+            padding: "10px 20px",
+            zIndex: 1000,
+            color: "var(--text)",
+            fontWeight: 700,
+            fontSize: "0.9rem",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+            whiteSpace: "nowrap",
+            animation: "slideUp 0.25s ease",
+          }}
+        >
+          ✓ {welcomeToast}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -323,6 +369,28 @@ export default function Dashboard() {
               </>
             )}
           </div>
+
+          {/* Sign out */}
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            title="サインアウト"
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: "50%",
+              background: "var(--surface2)",
+              border: "none",
+              color: "var(--muted)",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            ↩
+          </button>
         </div>
       </div>
 

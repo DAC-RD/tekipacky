@@ -1,14 +1,46 @@
 # UIコンポーネント仕様
 
-全コンポーネントは `"use client"` ディレクティブ付き（クライアントサイドレンダリング）。
+---
+
+## app/page.tsx（Server Component）
+
+**役割:** ルートページ。認証状態に応じて `LandingPage` または `Dashboard` を返す。
+
+**処理フロー:**
+1. `auth()` でセッションを取得（NextAuth v5）
+2. セッションなし → `<LandingPage />` を返す
+3. セッションあり → `welcomeMessage` を判定して `<Dashboard />` を返す
+
+**`welcomeMessage` の判定ロジック:**
+- `?welcome=1` クエリパラメータがある場合のみ DB クエリを実行
+- ユーザーの `createdAt` が 60 秒以内なら `"new"`、それ以外は `"returning"`
+
+---
+
+## LandingPage.tsx（Server Component）
+
+**役割:** 未認証ユーザー向けのランディングページ。アプリの概要と CTA を表示。
+
+**構成:**
+- Hero セクション: アプリ名・キャッチコピー・「メールで始める」ボタン（`→ /signin`）
+- Features セクション: 3枚の特徴カード（行動メニュー / ポイント獲得 / ご褒美）
+- Footer: コピーライト
+
+**ルーティング:**
+- 「メールで始める」ボタン → `/signin`
 
 ---
 
 ## Dashboard.tsx
 
-**役割:** アプリ全体のメインコンテナ。状態管理・UI制御の中枢。
+**役割:** アプリ全体のメインコンテナ。状態管理・UI制御の中枢。`"use client"` ディレクティブ付き。
 
 **依存:** `useStore` フック
+
+**Props:**
+| Prop | 型 | 説明 |
+|---|---|---|
+| `welcomeMessage` | `"new" \| "returning" \| null` | ウェルカムトーストの種類（null で非表示） |
 
 **管理する状態:**
 | 状態 | 型 | 説明 |
@@ -27,6 +59,10 @@
 - ご褒美カードタップ → `completeReward()` → 残高不足ガイドまたは消費成功
 - フィルタリング: `searchQuery` + `activeFilterTags` で actions/rewards を絞り込み
 - ソート: pt高い順・低い順・デフォルト順をトグル
+- サインアウト: `signOut()` ボタン（NextAuth v5 のサーバーアクションを呼び出す）
+- ウェルカムトースト: `welcomeMessage` prop に応じて 3 秒間表示後フェードアウト
+  - `"new"` → 「アカウントを作成しました」
+  - `"returning"` → 「ログインしました」
 
 ---
 

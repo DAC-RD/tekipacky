@@ -98,3 +98,21 @@ export function toRewardResponse(r: {
     price: r.price,
   };
 }
+
+/** PrismaのDoneAction/DoneRewardレコードをAPIレスポンス形式に変換 */
+export function toDoneItemResponse(item: {
+  actionId?: number | null;
+  rewardId?: number | null;
+  title: string;
+  pt: number;
+  count: number;
+  date: string;
+}): DoneItem {
+  return {
+    id: (item.actionId ?? item.rewardId)!,
+    title: item.title,
+    pt: item.pt,
+    count: item.count,
+    completedAt: item.date,
+  };
+}
