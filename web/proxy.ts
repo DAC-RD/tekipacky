@@ -1,58 +1,40 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
+import { NextResponse } from "next/server";
 
-const COOKIE_NAME = "userId";
-const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1年
+const { auth } = NextAuth(authConfig);
 
 /**
- * /api/* へのリクエストに対して userId を解決し、ルートハンドラに x-user-id ヘッダーで渡す。
- * Cookie が未設定または無効な場合は新規 User を作成して Cookie をセットする。
+ * Next.js 16 ミドルウェア（proxy.ts）。
+ * Edge Runtime で動作するため、Prisma / Node.js 専用モジュールを含まない
+ * authConfig を使って JWT セッションを検証する。
+ *
+ * - /api/auth/** → NextAuth が処理するため素通り
+ * - /api/**      → 認証必須。JWT から取得した userId を x-user-id ヘッダーで注入
+ * - その他       → 素通り（page.tsx 側で auth() を呼んでコンテンツを切り替える）
  */
-export async function proxy(req: NextRequest) {
-  const cookieUserId = req.cookies.get(COOKIE_NAME)?.value;
+export default auth((req) => {
+  const session = req.auth;
+  const { pathname } = req.nextUrl;
 
-  let userId: string;
-  let isNew = false;
+  // NextAuth の認証エンドポイントは保護しない
+  if (pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
 
-  if (cookieUserId) {
-    const exists = await prisma.user.findUnique({
-      where: { id: cookieUserId },
-      select: { id: true },
-    });
-    if (exists) {
-      userId = cookieUserId;
-    } else {
-      const user = await prisma.user.create({ data: {} });
-      userId = user.id;
-      isNew = true;
+  // API ルートは認証必須 + x-user-id ヘッダーを注入
+  if (pathname.startsWith("/api/")) {
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-  } else {
-    const user = await prisma.user.create({ data: {} });
-    userId = user.id;
-    isNew = true;
+    const headers = new Headers(req.headers);
+    headers.set("x-user-id", session.user.id);
+    return NextResponse.next({ request: { headers } });
   }
 
-  // 後続のルートハンドラに userId を渡す
-  const requestHeaders = new Headers(req.headers);
-  requestHeaders.set("x-user-id", userId);
-
-  const res = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
-
-  if (isNew) {
-    res.cookies.set(COOKIE_NAME, userId, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: COOKIE_MAX_AGE,
-      path: "/",
-    });
-  }
-
-  return res;
-}
+  return NextResponse.next();
+});
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

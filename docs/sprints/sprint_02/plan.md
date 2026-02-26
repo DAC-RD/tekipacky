@@ -45,44 +45,44 @@
 
 ### フェーズA：環境・スキーマ準備
 
-- [ ] `next-auth@beta` と `@auth/prisma-adapter` をインストール
-- [ ] `web/prisma/schema.prisma` に認証関連フィールド・テーブルを追加
+- [x] `next-auth@beta` と `@auth/prisma-adapter` をインストール
+- [x] `web/prisma/schema.prisma` に認証関連フィールド・テーブルを追加
   - User: `email String? @unique`, `emailVerified DateTime?`, `name String?`, リレーション追加
   - 新規: `Account`, `Session`, `VerificationToken`
-- [ ] Prisma マイグレーション実行（`add_auth_schema`）
-- [ ] `.env.example` に `AUTH_SECRET`, `AUTH_RESEND_KEY`, `AUTH_EMAIL_FROM` を追加
+- [x] Prisma マイグレーション実行（`add_auth_schema`）
+- [x] `.env.example` に `AUTH_SECRET`, `AUTH_RESEND_KEY`, `AUTH_EMAIL_FROM` を追加
 
 ### フェーズB：Auth.js 設定
 
-- [ ] `web/lib/auth.ts` を作成（Resend プロバイダー・JWT 戦略・callbacks）
-  - `jwt` callback: `user.id` を token に格納
-  - `session` callback: `token.id` を `session.user.id` に格納
-- [ ] `web/app/api/auth/[...nextauth]/route.ts` を作成（handlers エクスポート）
-- [ ] `web/proxy.ts` を作成（NextAuth ミドルウェア）
+- [x] `web/auth.config.ts` を作成（Edge 対応の基本設定）、`web/lib/auth.ts` を作成（Resend プロバイダー・JWT 戦略・callbacks）
+  - `session` callback: `token.sub` を `session.user.id` に格納
+- [x] `web/app/api/auth/[...nextauth]/route.ts` を作成（handlers エクスポート）
+- [x] `web/proxy.ts` を作成（NextAuth ミドルウェア）
   - API ルートの保護（未認証 → 401）
   - 認証済みリクエストへの `x-user-id` ヘッダー注入
   - サインインページ・`/api/auth/**` は認証不要
 
 ### フェーズC：画面実装
 
-- [ ] `web/app/page.tsx` を変更（`auth()` で条件分岐）
-- [ ] `web/components/LandingPage.tsx` を作成
+- [x] `web/app/page.tsx` を変更（`auth()` で条件分岐、welcome=1 時の新規/既存判定）
+- [x] `web/components/LandingPage.tsx` を作成
   - ヒーローセクション（アプリ名・キャッチコピー）
   - 3つの特徴説明（行動メニュー / ポイント獲得 / ご褒美）
   - CTA ボタン（「始める」→ `/signin`）
-- [ ] `web/app/signin/page.tsx` を作成（メールアドレス入力・送信）
-- [ ] `web/app/signin/verify/page.tsx` を作成（確認メッセージ）
-- [ ] ダッシュボードにサインアウトボタンを追加
+- [x] `web/app/signin/page.tsx` を作成（メールアドレス入力・送信・トップへ戻るリンク）
+- [x] `web/app/signin/verify/page.tsx` を作成（確認メッセージ）
+- [x] ダッシュボードにサインアウトボタンを追加
+- [x] ログイン後ウェルカムトースト（新規: 「アカウントを作成しました」/ 既存: 「ログインしました」、3秒で自動消滅）
 
 ### フェーズD：検証
 
-- [ ] ローカルで E2E フローを手動確認
+- [x] ローカルで E2E フローを手動確認
   - 未認証で `/` → ランディングページが表示される
   - `/signin` でメール送信 → Resend でメール受信確認
   - マジックリンクをクリック → ダッシュボードにリダイレクト
   - 未認証で `GET /api/state` → 401 が返る
   - サインアウト → ランディングページに戻る
-- [ ] 既存テスト 175 本がすべて通ることを確認（`npx vitest run`）
+- [x] テスト 206 本がすべて通ることを確認（既存 175 + Sprint 02 新規 31）
 
 ---
 
