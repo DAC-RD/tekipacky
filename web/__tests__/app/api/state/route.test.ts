@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeRequest } from "../../../helpers/request";
+import type {
+  UserModel,
+  ActionModel,
+  RewardModel,
+  DoneActionModel,
+  DoneRewardModel,
+} from "@/app/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -32,11 +39,15 @@ describe("GET /api/state", () => {
     vi.clearAllMocks();
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "Asia/Tokyo",
       mode: "NORMAL",
       points: 100,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     mockPrisma.action.findMany.mockResolvedValue([
       {
         id: 1,
@@ -46,7 +57,9 @@ describe("GET /api/state", () => {
         tags: [],
         hurdle: 1,
         time: 1,
-      },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } satisfies ActionModel,
     ] as never);
     mockPrisma.reward.findMany.mockResolvedValue([
       {
@@ -58,29 +71,31 @@ describe("GET /api/state", () => {
         satisfaction: 2,
         time: 2,
         price: 1,
-      },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } satisfies RewardModel,
     ] as never);
     mockPrisma.doneAction.findMany.mockResolvedValue([
       {
         id: 1,
         actionId: 1,
+        userId: USER_ID,
         title: "朝ごはん",
         pt: 1,
         count: 1,
         date: "2024-01-15",
-        userId: USER_ID,
-      },
+      } satisfies DoneActionModel,
     ] as never);
     mockPrisma.doneReward.findMany.mockResolvedValue([
       {
         id: 1,
         rewardId: 1,
+        userId: USER_ID,
         title: "Netflix",
         pt: 4,
         count: 1,
         date: "2024-01-15",
-        userId: USER_ID,
-      },
+      } satisfies DoneRewardModel,
     ] as never);
   });
 
@@ -130,21 +145,21 @@ describe("GET /api/state", () => {
       {
         id: 1,
         actionId: 1,
+        userId: USER_ID,
         title: "存在する",
         pt: 1,
         count: 1,
         date: "2024-01-15",
-        userId: USER_ID,
-      },
+      } satisfies DoneActionModel,
       {
         id: 2,
         actionId: null,
+        userId: USER_ID,
         title: "削除済み",
         pt: 2,
         count: 1,
         date: "2024-01-15",
-        userId: USER_ID,
-      },
+      } satisfies DoneActionModel,
     ] as never);
 
     const req = makeRequest("GET", "/api/state");
@@ -160,21 +175,21 @@ describe("GET /api/state", () => {
       {
         id: 1,
         rewardId: 1,
+        userId: USER_ID,
         title: "存在する",
         pt: 4,
         count: 1,
         date: "2024-01-15",
-        userId: USER_ID,
-      },
+      } satisfies DoneRewardModel,
       {
         id: 2,
         rewardId: null,
+        userId: USER_ID,
         title: "削除済み",
         pt: 5,
         count: 1,
         date: "2024-01-15",
-        userId: USER_ID,
-      },
+      } satisfies DoneRewardModel,
     ] as never);
 
     const req = makeRequest("GET", "/api/state");
@@ -188,11 +203,15 @@ describe("GET /api/state", () => {
   it("points が正しく返される", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "UTC",
       mode: "HARD",
       points: 250,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
 
     const req = makeRequest("GET", "/api/state");
     const res = await GET(req);

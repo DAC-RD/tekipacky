@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeRequest } from "../../../../helpers/request";
+import type { ActionModel } from "@/app/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -30,7 +31,9 @@ describe("PUT /api/actions/[id]", () => {
       tags: ["食事"],
       hurdle: 2,
       time: 3,
-    };
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies ActionModel;
     mockPrisma.action.update.mockResolvedValue(updated as never);
 
     const req = makeRequest("PUT", "/api/actions/1", {
@@ -57,7 +60,9 @@ describe("PUT /api/actions/[id]", () => {
       tags: [],
       hurdle: 1,
       time: 1,
-    };
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies ActionModel;
     mockPrisma.action.update.mockResolvedValue(updated as never);
 
     const req = makeRequest("PUT", "/api/actions/1", {

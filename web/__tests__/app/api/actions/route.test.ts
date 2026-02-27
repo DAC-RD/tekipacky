@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeRequest } from "../../../helpers/request";
+import type { ActionModel } from "@/app/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -29,7 +30,9 @@ describe("POST /api/actions", () => {
       tags: [],
       hurdle: 1,
       time: 1,
-    };
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies ActionModel;
     mockPrisma.action.create.mockResolvedValue(created as never);
 
     const req = makeRequest("POST", "/api/actions", {
@@ -54,7 +57,9 @@ describe("POST /api/actions", () => {
       tags: [],
       hurdle: 1,
       time: 1,
-    };
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies ActionModel;
     mockPrisma.action.create.mockResolvedValue(created as never);
 
     const req = makeRequest("POST", "/api/actions", {
@@ -80,7 +85,9 @@ describe("POST /api/actions", () => {
       tags: [],
       hurdle: 1,
       time: 1,
-    };
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies ActionModel;
     mockPrisma.action.create.mockResolvedValue(created as never);
 
     const req = makeRequest("POST", "/api/actions", {
@@ -106,7 +113,9 @@ describe("POST /api/actions", () => {
       tags: [],
       hurdle: 1,
       time: 1,
-    };
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies ActionModel;
     mockPrisma.action.create.mockResolvedValue(created as never);
 
     const req = makeRequest("POST", "/api/actions", {

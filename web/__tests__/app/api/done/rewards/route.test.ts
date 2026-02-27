@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeRequest } from "../../../../helpers/request";
+import type {
+  UserModel,
+  RewardModel,
+  DoneRewardModel,
+} from "@/app/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -31,7 +36,9 @@ const mockReward = {
   price: 1,
   desc: "",
   tags: [],
-};
+  createdAt: new Date(),
+  updatedAt: new Date(),
+} satisfies RewardModel;
 
 describe("POST /api/done/rewards", () => {
   beforeEach(() => {
@@ -41,21 +48,25 @@ describe("POST /api/done/rewards", () => {
   it("ポイントが十分な場合にリワードが消費できる", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "Asia/Tokyo",
       mode: "NORMAL",
       points: 100,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     mockPrisma.reward.findUniqueOrThrow.mockResolvedValue(mockReward as never);
     mockPrisma.doneReward.upsert.mockResolvedValue({
       id: 1,
       rewardId: 1,
+      userId: USER_ID,
       title: "Netflixを見る",
       pt: 4, // 2 * 2 * 1 * 1.0 = 4
       count: 1,
       date: "2024-01-15",
-      userId: USER_ID,
-    } as never);
+    } satisfies DoneRewardModel as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
     const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
@@ -70,11 +81,15 @@ describe("POST /api/done/rewards", () => {
   it("ポイント不足の場合に 400 を返す", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "Asia/Tokyo",
       mode: "NORMAL",
       points: 0, // 残高不足
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     mockPrisma.reward.findUniqueOrThrow.mockResolvedValue(mockReward as never);
 
     const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
@@ -86,11 +101,15 @@ describe("POST /api/done/rewards", () => {
   it("ポイント不足の場合に insufficient points エラーを返す", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "Asia/Tokyo",
       mode: "NORMAL",
       points: 0,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     mockPrisma.reward.findUniqueOrThrow.mockResolvedValue(mockReward as never);
 
     const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
@@ -103,11 +122,15 @@ describe("POST /api/done/rewards", () => {
   it("ポイント不足の場合は doneReward.upsert が呼ばれない", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "Asia/Tokyo",
       mode: "NORMAL",
       points: 3, // pt=4 には足りない
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     mockPrisma.reward.findUniqueOrThrow.mockResolvedValue(mockReward as never);
 
     const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
@@ -119,27 +142,31 @@ describe("POST /api/done/rewards", () => {
   it("サーバーサイドでポイントを計算する（upsert の pt はサーバー計算値）", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "UTC",
       mode: "HARD", // spendMul=1.5
       points: 200,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     // satisfaction=2, time=2, price=2: 2*2*2*1.5 = 12
     mockPrisma.reward.findUniqueOrThrow.mockResolvedValue({
       ...mockReward,
       satisfaction: 2,
       time: 2,
       price: 2,
-    } as never);
+    } satisfies RewardModel as never);
     mockPrisma.doneReward.upsert.mockResolvedValue({
       id: 1,
       rewardId: 1,
+      userId: USER_ID,
       title: "Netflixを見る",
       pt: 12,
       count: 1,
       date: "2024-01-15",
-      userId: USER_ID,
-    } as never);
+    } satisfies DoneRewardModel as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
     const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });
@@ -155,21 +182,25 @@ describe("POST /api/done/rewards", () => {
   it("user.update でポイントが decrement される", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "UTC",
       mode: "NORMAL",
       points: 100,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     mockPrisma.reward.findUniqueOrThrow.mockResolvedValue(mockReward as never); // pt=4
     mockPrisma.doneReward.upsert.mockResolvedValue({
       id: 1,
       rewardId: 1,
+      userId: USER_ID,
       title: "Netflixを見る",
       pt: 4,
       count: 1,
       date: "2024-01-15",
-      userId: USER_ID,
-    } as never);
+    } satisfies DoneRewardModel as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
     const req = makeRequest("POST", "/api/done/rewards", { rewardId: 1 });

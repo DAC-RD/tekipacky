@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { signOut } from "next-auth/react";
+import { useFilteredItems } from "@/hooks/useFilteredItems";
 import { useStore } from "@/hooks/useStore";
-import { FloatItem, Mode, SortOrder, Tab } from "@/lib/types";
+import { FloatItem, SortOrder, Tab } from "@/lib/types";
 import { calcActionPt, calcRewardPt } from "@/lib/utils";
 import PointDisplay from "@/components/PointDisplay";
 import DoneAccordion from "@/components/DoneAccordion";
 import FilterArea from "@/components/FilterArea";
 import ItemModal, { ModalSaveData } from "@/components/ItemModal";
+import WelcomeToast from "@/components/WelcomeToast";
+import ModeSelector from "@/components/ModeSelector";
+import ActionCardList from "@/components/ActionCardList";
+import RewardCardList from "@/components/RewardCardList";
 
 interface DashboardProps {
   welcomeMessage?: "new" | "returning" | null;
@@ -27,7 +31,7 @@ export default function Dashboard({ welcomeMessage }: DashboardProps) {
     changeMode,
   } = useStore();
 
-  // UI state (not persisted)
+  // UI state
   const [currentTab, setCurrentTab] = useState<Tab>("action");
   const [activeFilterTags, setActiveFilterTags] = useState<
     Record<Tab, string[]>
@@ -46,24 +50,25 @@ export default function Dashboard({ welcomeMessage }: DashboardProps) {
   const [modalKey, setModalKey] = useState(0);
   const [flashKey, setFlashKey] = useState(0);
   const [floats, setFloats] = useState<FloatItem[]>([]);
-  const [modeTooltipOpen, setModeTooltipOpen] = useState(false);
   const floatIdRef = useRef(0);
 
-  // ログイン後トースト
-  const [welcomeToast, setWelcomeToast] = useState<string | null>(
+  // トースト（ウェルカム & エラー共用）
+  const [toast, setToast] = useState<{
+    message: string;
+    isError?: boolean;
+  } | null>(
     welcomeMessage === "new"
-      ? "アカウントを作成しました"
+      ? { message: "アカウントを作成しました" }
       : welcomeMessage === "returning"
-        ? "ログインしました"
+        ? { message: "ログインしました" }
         : null,
   );
   useEffect(() => {
-    if (!welcomeToast) return;
-    // URL から ?welcome=1 を除去
-    window.history.replaceState({}, "", "/");
-    const timer = setTimeout(() => setWelcomeToast(null), 3000);
+    if (!toast) return;
+    if (!toast.isError) window.history.replaceState({}, "", "/");
+    const timer = setTimeout(() => setToast(null), 3000);
     return () => clearTimeout(timer);
-  }, [welcomeToast]);
+  }, [toast]);
 
   // Computed
   const todayEarned = state.doneActions.reduce(
@@ -75,73 +80,20 @@ export default function Dashboard({ welcomeMessage }: DashboardProps) {
     0,
   );
 
-  const filteredActions = useMemo(() => {
-    let items = state.actions;
-    const filters = activeFilterTags.action;
-    const query = searchQuery.action.trim().toLowerCase();
-    if (filters.length)
-      items = items.filter((a) => filters.every((t) => a.tags.includes(t)));
-    if (query)
-      items = items.filter(
-        (a) =>
-          a.title.toLowerCase().includes(query) ||
-          a.desc.toLowerCase().includes(query) ||
-          a.tags.some((t) => t.toLowerCase().includes(query)),
-      );
-    if (sortOrder.action === "pt-desc")
-      items = [...items].sort(
-        (a, b) =>
-          calcActionPt(b.hurdle, b.time, state.mode) -
-          calcActionPt(a.hurdle, a.time, state.mode),
-      );
-    if (sortOrder.action === "pt-asc")
-      items = [...items].sort(
-        (a, b) =>
-          calcActionPt(a.hurdle, a.time, state.mode) -
-          calcActionPt(b.hurdle, b.time, state.mode),
-      );
-    return items;
-  }, [
+  const filteredActions = useFilteredItems(
     state.actions,
-    state.mode,
     activeFilterTags.action,
     searchQuery.action,
     sortOrder.action,
-  ]);
-
-  const filteredRewards = useMemo(() => {
-    let items = state.rewards;
-    const filters = activeFilterTags.reward;
-    const query = searchQuery.reward.trim().toLowerCase();
-    if (filters.length)
-      items = items.filter((r) => filters.every((t) => r.tags.includes(t)));
-    if (query)
-      items = items.filter(
-        (r) =>
-          r.title.toLowerCase().includes(query) ||
-          r.desc.toLowerCase().includes(query) ||
-          r.tags.some((t) => t.toLowerCase().includes(query)),
-      );
-    if (sortOrder.reward === "pt-desc")
-      items = [...items].sort(
-        (a, b) =>
-          calcRewardPt(b.satisfaction, b.time, b.price, state.mode) -
-          calcRewardPt(a.satisfaction, a.time, a.price, state.mode),
-      );
-    if (sortOrder.reward === "pt-asc")
-      items = [...items].sort(
-        (a, b) =>
-          calcRewardPt(a.satisfaction, a.time, a.price, state.mode) -
-          calcRewardPt(b.satisfaction, b.time, b.price, state.mode),
-      );
-    return items;
-  }, [
+    (a) => calcActionPt(a.hurdle, a.time, state.mode),
+  );
+  const filteredRewards = useFilteredItems(
     state.rewards,
-    state.mode,
     activeFilterTags.reward,
     searchQuery.reward,
     sortOrder.reward,
-  ]);
+    (r) => calcRewardPt(r.satisfaction, r.time, r.price, state.mode),
+  );
 
   const actionTags = useMemo(
     () => [...new Set(state.actions.flatMap((a) => a.tags))].sort(),
@@ -156,12 +108,12 @@ export default function Dashboard({ welcomeMessage }: DashboardProps) {
   function showFloat(x: number, y: number, text: string, color: string) {
     const id = ++floatIdRef.current;
     setFloats((prev) => [...prev, { id, x, y, text, color }]);
-    setTimeout(() => {
-      setFloats((prev) => prev.filter((f) => f.id !== id));
-    }, 1000);
+    setTimeout(
+      () => setFloats((prev) => prev.filter((f) => f.id !== id)),
+      1000,
+    );
   }
 
-  // Actions
   async function handleCompleteAction(
     id: number,
     clientX: number,
@@ -200,24 +152,30 @@ export default function Dashboard({ welcomeMessage }: DashboardProps) {
   }
 
   async function handleModalSave(data: ModalSaveData) {
-    await saveItem(data);
-    setModalOpen(false);
+    try {
+      await saveItem(data);
+      setModalOpen(false);
+    } catch {
+      setToast({ message: "保存に失敗しました", isError: true });
+    }
   }
 
   async function handleModalDelete(type: Tab, id: number) {
-    await deleteItem(type, id);
-    setModalOpen(false);
+    try {
+      await deleteItem(type, id);
+      setModalOpen(false);
+    } catch {
+      setToast({ message: "削除に失敗しました", isError: true });
+    }
   }
 
   function toggleFilterTag(tab: Tab, tag: string) {
     setActiveFilterTags((prev) => {
       const filters = prev[tab];
       const idx = filters.indexOf(tag);
-      if (idx >= 0) {
-        return { ...prev, [tab]: filters.filter((t) => t !== tag) };
-      } else {
-        return { ...prev, [tab]: [...filters, tag] };
-      }
+      return idx >= 0
+        ? { ...prev, [tab]: filters.filter((t) => t !== tag) }
+        : { ...prev, [tab]: [...filters, tag] };
     });
   }
 
@@ -229,169 +187,17 @@ export default function Dashboard({ welcomeMessage }: DashboardProps) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 md:py-10">
-      {/* ログイン後トースト */}
-      {welcomeToast && (
-        <div
-          style={{
-            position: "fixed",
-            top: 20,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "var(--surface)",
-            border: "1.5px solid var(--accent)",
-            borderRadius: 12,
-            padding: "10px 20px",
-            zIndex: 1000,
-            color: "var(--text)",
-            fontWeight: 700,
-            fontSize: "0.9rem",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-            whiteSpace: "nowrap",
-            animation: "slideUp 0.25s ease",
-          }}
-        >
-          ✓ {welcomeToast}
-        </div>
-      )}
+      <WelcomeToast toast={toast} />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1
-            className="text-xl font-black tracking-tight"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            テキパッキー <span style={{ color: "var(--accent)" }}>✦</span>
+          <h1 className="text-xl font-black tracking-tight">
+            テキパッキー <span className="text-accent">✦</span>
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-            今日もテキパキいこう
-          </p>
+          <p className="text-xs mt-0.5 text-muted">今日もテキパキいこう</p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Mode selector */}
-          <div className="relative inline-flex items-center">
-            <select
-              value={state.mode}
-              onChange={(e) => changeMode(e.target.value as Mode)}
-              className="text-xs font-bold rounded-xl pl-3 pr-7 py-2 border-none outline-none cursor-pointer appearance-none"
-              style={{ background: "var(--surface2)", color: "var(--text)" }}
-            >
-              <option value="easy">🟢 イージー</option>
-              <option value="normal">🟡 ノーマル</option>
-              <option value="hard">🔴 ハード</option>
-            </select>
-            <span
-              className="absolute right-2 pointer-events-none text-base"
-              style={{ color: "var(--muted)" }}
-            >
-              ▾
-            </span>
-          </div>
-
-          {/* Mode help */}
-          <div className="relative">
-            <button
-              onClick={() => setModeTooltipOpen((v) => !v)}
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: "50%",
-                background: "var(--surface2)",
-                border: "none",
-                color: "var(--muted)",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              ?
-            </button>
-            {modeTooltipOpen && (
-              <>
-                <div
-                  style={{
-                    position: "fixed",
-                    inset: 0,
-                    zIndex: 40,
-                  }}
-                  onClick={() => setModeTooltipOpen(false)}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    right: 0,
-                    top: 32,
-                    background: "var(--surface)",
-                    border: "1.5px solid var(--surface2)",
-                    borderRadius: 14,
-                    padding: "14px 16px",
-                    width: 240,
-                    zIndex: 50,
-                    fontSize: "0.82rem",
-                    lineHeight: 1.7,
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                  }}
-                >
-                  <div
-                    className="font-black mb-2"
-                    style={{ color: "var(--text)" }}
-                  >
-                    モードについて
-                  </div>
-                  <div className="mb-1">
-                    🟢 <b>イージー</b>
-                  </div>
-                  <div style={{ color: "var(--muted)" }} className="mb-2">
-                    獲得 ×1.5 ／ 消費 ×0.7
-                    <br />
-                    ポイントが貯まりやすい
-                  </div>
-                  <div className="mb-1">
-                    🟡 <b>ノーマル</b>
-                  </div>
-                  <div style={{ color: "var(--muted)" }} className="mb-2">
-                    獲得 ×1.0 ／ 消費 ×1.0
-                    <br />
-                    標準バランス
-                  </div>
-                  <div className="mb-1">
-                    🔴 <b>ハード</b>
-                  </div>
-                  <div style={{ color: "var(--muted)" }}>
-                    獲得 ×0.8 ／ 消費 ×1.5
-                    <br />
-                    ポイントが貯まりにくい
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Sign out */}
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            title="サインアウト"
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: "50%",
-              background: "var(--surface2)",
-              border: "none",
-              color: "var(--muted)",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            ↩
-          </button>
-        </div>
+        <ModeSelector mode={state.mode} onModeChange={changeMode} />
       </div>
 
       {/* Point display */}
@@ -437,8 +243,7 @@ export default function Dashboard({ welcomeMessage }: DashboardProps) {
           </button>
         </div>
         <button
-          className="fab"
-          style={{ width: 40, height: 40, fontSize: "1.2rem", flexShrink: 0 }}
+          className="fab fab-sm"
           onClick={() => openModal(currentTab)}
           title="追加"
         >
@@ -464,211 +269,26 @@ export default function Dashboard({ welcomeMessage }: DashboardProps) {
 
       {/* Item lists */}
       {isActionTab ? (
-        <div>
-          <p className="section-title">
-            タップしてポイント獲得
-            {hasFilter &&
-              ` (${filteredActions.length}/${state.actions.length}件)`}
-          </p>
-          {!hydrated ? (
-            <p
-              style={{
-                color: "var(--muted)",
-                fontSize: "0.9rem",
-                textAlign: "center",
-                padding: "20px 0",
-              }}
-            >
-              読み込み中...
-            </p>
-          ) : filteredActions.length === 0 ? (
-            <p
-              style={{
-                color: "var(--muted)",
-                fontSize: "0.9rem",
-                textAlign: "center",
-                padding: "20px 0",
-              }}
-            >
-              まだ行動がありません
-              <br />
-              ＋ボタンで追加しましょう
-            </p>
-          ) : (
-            filteredActions.map((a) => {
-              const pt = calcActionPt(a.hurdle, a.time, state.mode);
-              return (
-                <div
-                  key={a.id}
-                  className="action-card mb-3"
-                  onClick={(e) =>
-                    handleCompleteAction(a.id, e.clientX, e.clientY)
-                  }
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm truncate">{a.title}</div>
-                    {a.desc && (
-                      <div
-                        className="text-xs mt-0.5 truncate"
-                        style={{ color: "var(--muted)" }}
-                      >
-                        {a.desc}
-                      </div>
-                    )}
-                    {a.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {a.tags.map((t) => (
-                          <span
-                            key={t}
-                            style={{
-                              fontSize: "0.7rem",
-                              fontWeight: 700,
-                              padding: "2px 7px",
-                              borderRadius: 20,
-                              background: "rgba(255,107,53,0.15)",
-                              color: "var(--accent)",
-                            }}
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <span className="pt-badge">+{pt}pt</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openModal("action", a.id);
-                    }}
-                    style={{
-                      background: "var(--surface2)",
-                      border: "none",
-                      color: "var(--muted)",
-                      borderRadius: 8,
-                      width: 28,
-                      height: 28,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "0.85rem",
-                      flexShrink: 0,
-                    }}
-                  >
-                    ✎
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
+        <ActionCardList
+          actions={filteredActions}
+          mode={state.mode}
+          hydrated={hydrated}
+          totalCount={state.actions.length}
+          hasFilter={hasFilter}
+          onComplete={handleCompleteAction}
+          onEdit={(id) => openModal("action", id)}
+        />
       ) : (
-        <div>
-          <p className="section-title">
-            タップしてポイント消費
-            {hasFilter &&
-              ` (${filteredRewards.length}/${state.rewards.length}件)`}
-          </p>
-          {!hydrated ? (
-            <p
-              style={{
-                color: "var(--muted)",
-                fontSize: "0.9rem",
-                textAlign: "center",
-                padding: "20px 0",
-              }}
-            >
-              読み込み中...
-            </p>
-          ) : filteredRewards.length === 0 ? (
-            <p
-              style={{
-                color: "var(--muted)",
-                fontSize: "0.9rem",
-                textAlign: "center",
-                padding: "20px 0",
-              }}
-            >
-              まだご褒美がありません
-              <br />
-              ＋ボタンで追加しましょう
-            </p>
-          ) : (
-            filteredRewards.map((r) => {
-              const pt = calcRewardPt(
-                r.satisfaction,
-                r.time,
-                r.price,
-                state.mode,
-              );
-              const canAfford = state.points >= pt;
-              return (
-                <div
-                  key={r.id}
-                  className={`action-card reward-card mb-3 ${!canAfford ? "opacity-40" : ""}`}
-                  onClick={(e) =>
-                    handleCompleteReward(r.id, e.clientX, e.clientY)
-                  }
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm truncate">{r.title}</div>
-                    {r.desc && (
-                      <div
-                        className="text-xs mt-0.5 truncate"
-                        style={{ color: "var(--muted)" }}
-                      >
-                        {r.desc}
-                      </div>
-                    )}
-                    {r.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {r.tags.map((t) => (
-                          <span
-                            key={t}
-                            style={{
-                              fontSize: "0.7rem",
-                              fontWeight: 700,
-                              padding: "2px 7px",
-                              borderRadius: 20,
-                              background: "rgba(6,214,160,0.15)",
-                              color: "var(--reward)",
-                            }}
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <span className="pt-badge reward">-{pt}pt</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openModal("reward", r.id);
-                    }}
-                    style={{
-                      background: "var(--surface2)",
-                      border: "none",
-                      color: "var(--muted)",
-                      borderRadius: 8,
-                      width: 28,
-                      height: 28,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "0.85rem",
-                      flexShrink: 0,
-                    }}
-                  >
-                    ✎
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
+        <RewardCardList
+          rewards={filteredRewards}
+          mode={state.mode}
+          points={state.points}
+          hydrated={hydrated}
+          totalCount={state.rewards.length}
+          hasFilter={hasFilter}
+          onComplete={handleCompleteReward}
+          onEdit={(id) => openModal("reward", id)}
+        />
       )}
 
       {/* Modal */}

@@ -43,7 +43,9 @@ web/
 │   │   │       ├── route.ts      # POST（消費記録・ポイント減算）
 │   │   │       └── [rewardId]/route.ts   # PATCH（回数調整）
 │   │   ├── state/route.ts        # GET（全状態取得）
-│   │   └── user/route.ts         # PATCH（ユーザー設定更新）
+│   │   └── user/
+│   │       ├── route.ts          # GET（ユーザー情報取得）/ PATCH（モード変更）/ DELETE（アカウント削除）
+│   │       └── email/route.ts    # POST（メールアドレス変更リクエスト・Resend送信）
 │   ├── api/
 │   │   └── auth/[...nextauth]/route.ts  # NextAuth ハンドラ（GET / POST）
 │   ├── generated/prisma/         # 自動生成Prismaクライアント
@@ -52,13 +54,18 @@ web/
 │   ├── signin/
 │   │   ├── page.tsx              # メールアドレス入力・マジックリンク送信
 │   │   └── verify/page.tsx       # メール送信完了・確認画面
+│   └── settings/
+│       ├── page.tsx              # 設定ページ（未認証は /signin にリダイレクト）
+│       └── email-verify/page.tsx # メール変更確認リンク処理
 ├── components/                   # Reactコンポーネント
 │   ├── Dashboard.tsx             # メインUIコンテナ（状態管理・ルーティング）
 │   ├── LandingPage.tsx           # 未認証ユーザー向けランディングページ
 │   ├── PointDisplay.tsx          # ポイント表示（フラッシュアニメーション付き）
 │   ├── FilterArea.tsx            # 検索・ソート・タグフィルター
 │   ├── ItemModal.tsx             # 行動・ご褒美の追加・編集モーダル
-│   └── DoneAccordion.tsx         # 今日のログ（アコーディオン）
+│   ├── DoneAccordion.tsx         # 今日のログ（アコーディオン）
+│   ├── ModeSelector.tsx          # モード選択・ヘルプ・設定/サインアウトメニュー
+│   └── SettingsPage.tsx          # 設定ページUI（メール変更・アカウント削除）
 ├── hooks/
 │   └── useStore.ts               # アプリ状態管理フック（API連携）
 ├── lib/

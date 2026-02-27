@@ -188,12 +188,70 @@ User テーブルに追加されたフィールド:
 
 ---
 
+## アカウント管理（Sprint 03）
+
+設定ページ（`/settings`）からメールアドレス変更とアカウント削除を行える。
+
+### ファイル構成
+
+| ファイル | 役割 |
+|---|---|
+| `web/app/settings/page.tsx` | 設定ページ（Server Component、未認証は `/signin` にリダイレクト） |
+| `web/app/settings/email-verify/page.tsx` | メール変更確認リンク処理（Server Component） |
+| `web/components/SettingsPage.tsx` | 設定 UI（Client Component） |
+| `web/app/api/user/route.ts` | GET（メール取得）/ PATCH（モード変更）/ DELETE（アカウント削除） |
+| `web/app/api/user/email/route.ts` | POST（メール変更リクエスト・Resend 送信） |
+
+### メールアドレス変更フロー
+
+```
+[設定ページ /settings]
+  → 新しいメールアドレスを入力して「確認メールを送る」
+  → POST /api/user/email
+  → VerificationToken 生成・保存
+      identifier = "email-change:${userId}|${newEmail}"
+      token      = crypto.randomUUID()
+      expires    = 24時間後
+  → Resend で確認メール送信（リンク: ${AUTH_URL}/settings/email-verify?token=xxx）
+
+[ユーザーがメール内リンクをクリック]
+  → /settings/email-verify?token=xxx (Server Component)
+  → prisma.verificationToken.findFirst({ where: { token } })
+  → 有効期限・identifier 形式チェック
+  → prisma.user.update({ data: { email: newEmail } })
+  → VerificationToken 削除
+  → /settings?success=emailChanged にリダイレクト
+```
+
+**VerificationToken の流用:**
+- `identifier` にパイプ区切りで `userId` と `newEmail` を格納し、スキーマ変更なしで実現
+- `token` は UUID（メール内リンクのクエリパラメータとして使用）
+- 同一ユーザーの既存トークンは `deleteMany` で上書き（同時に複数のリクエストを防止）
+
+**セッション継続:** メール変更後も既存 JWT（userId ベース）は有効のまま継続使用可能。次回サインイン時に新しいアドレスが使われる。
+
+### アカウント削除フロー
+
+```
+[設定ページ /settings] → 「アカウントを削除」ボタン
+  → 確認ダイアログで「削除する」と入力して確定
+  → DELETE /api/user
+  → prisma.user.delete({ where: { id: userId } })
+      ※ onDelete: Cascade により全関連データが自動削除
+  → クライアント: signOut({ callbackUrl: '/' })
+  → ランディングページへリダイレクト
+```
+
+---
+
 ## セキュリティ設計
 
 | 項目 | 設計 |
 |---|---|
 | セッション | JWT（Cookie に格納）。サーバー DB に依存しない |
 | トークン有効期限 | マジックリンク: 24時間（Resend デフォルト） |
+| メール変更トークン | VerificationToken テーブルを流用。24時間有効 |
 | API 認証 | ミドルウェアで JWT を検証し `x-user-id` ヘッダーを注入。APIルートはヘッダーのみ参照 |
 | ユーザー識別 | `session.user.id` = Prisma User の CUID（`token.sub` から取得） |
 | パスワード | 不要（マジックリンクのみ） |
+| アカウント削除 | ダイアログで「削除する」入力を要求（誤操作防止） |

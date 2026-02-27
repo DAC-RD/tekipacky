@@ -118,10 +118,10 @@
 
 ### リファクタリング（技術的負債）
 
-- [ ] Dashboard コンポーネントの分割（700行 → ModeSelector, WelcomeToast, ItemCard, ActionCardList, RewardCardList）
-- [ ] filteredActions / filteredRewards の共通化（`useFilteredItems` カスタムフック）
-- [ ] ItemModal の責務分離（ActionForm / RewardForm コンポーネント化、`useTagManager` フック）
-- [ ] テストの `as never` → 適切な Prisma 型定義（`satisfies` 使用）
-- [ ] Dashboard のインラインスタイル → CSS クラス化（`.action-tag`, `.reward-tag`, `.welcome-toast` 等）
-- [ ] useStore のエラーハンドリング強化（saveItem / deleteItem の失敗時 UI 通知）
-- [ ] done 操作ロジックの共通化（DoneAction / DoneReward の upsert・count 変更を `lib/done.ts` に集約）
+- [x] Dashboard コンポーネントの分割（700行 → ModeSelector, WelcomeToast, ItemCard, ActionCardList, RewardCardList）
+- [x] filteredActions / filteredRewards の共通化（`useFilteredItems` カスタムフック）
+- [x] ItemModal の責務分離（ActionForm / RewardForm コンポーネント化、`useTagManager` フック）
+- [x] テストの `as never` → 適切な Prisma 型定義（`satisfies` 使用）
+- [x] Dashboard のインラインスタイル → CSS クラス化（`.action-tag`, `.reward-tag`, `.welcome-toast` 等）
+- [x] useStore のエラーハンドリング強化（saveItem / deleteItem の失敗時 UI 通知）
+- [x] done 操作ロジックの共通化（DoneAction / DoneReward の upsert・count 変更を `lib/done.ts` に集約）
