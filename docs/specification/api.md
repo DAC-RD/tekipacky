@@ -202,6 +202,17 @@ HTTP 400
 
 ## ユーザー設定
 
+### `GET /api/user`
+
+ログイン中のユーザーのメールアドレスを取得する。
+
+**レスポンス:**
+```json
+{ "email": "user@example.com" }
+```
+
+---
+
 ### `PATCH /api/user`
 
 難易度モードを変更する。
@@ -212,6 +223,54 @@ HTTP 400
 ```
 
 **レスポンス:** `{ "ok": true }`
+
+---
+
+### `DELETE /api/user`
+
+アカウントと全関連データを削除する。
+
+**レスポンス:** `{ "ok": true }`
+
+**注意:**
+- User レコード削除により `onDelete: Cascade` で Action / Reward / DoneAction / DoneReward / Account / Session も自動削除される
+- クライアント側でレスポンス受信後に `signOut()` を呼ぶ
+
+---
+
+## メールアドレス変更
+
+### `POST /api/user/email`
+
+メールアドレス変更の確認メールを送信する。
+
+**リクエストボディ:**
+```json
+{ "newEmail": "new@example.com" }
+```
+
+**レスポンス（成功）:** `{ "ok": true }`
+
+**レスポンス（エラー）:**
+```
+HTTP 400  { "error": "不正なメールアドレスです" }
+HTTP 400  { "error": "現在と同じメールアドレスです" }
+HTTP 400  { "error": "このメールアドレスは既に使用されています" }
+```
+
+**サーバー側処理:**
+1. メール形式バリデーション
+2. 現在のメールアドレスと同一チェック
+3. 重複チェック（他ユーザーが使用中でないか）
+4. `VerificationToken` を生成して保存
+   - `identifier` = `email-change:${userId}|${newEmail}`
+   - `token` = `crypto.randomUUID()`
+   - `expires` = 24時間後
+5. Resend で確認メール送信（リンク: `${AUTH_URL}/settings/email-verify?token=xxx`）
+
+**確認リンクの処理（`GET /settings/email-verify?token=xxx`）:**
+- Server Component がトークンを検証し `User.email` を更新
+- 完了後 `/settings?success=emailChanged` にリダイレクト
 
 ---
 
