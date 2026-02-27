@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
+import Link from "next/link";
 import { Mode } from "@/lib/types";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 
 export default function ModeSelector({ mode, onModeChange }: Props) {
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="flex items-center gap-2">
@@ -73,14 +75,42 @@ export default function ModeSelector({ mode, onModeChange }: Props) {
         )}
       </div>
 
-      {/* Sign out */}
-      <button
-        onClick={() => signOut({ callbackUrl: "/" })}
-        title="サインアウト"
-        className="icon-btn"
-      >
-        ↩
-      </button>
+      {/* Settings / Sign out menu */}
+      <div className="relative">
+        <button onClick={() => setMenuOpen((v) => !v)} className="icon-btn">
+          ⚙
+        </button>
+        {menuOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setMenuOpen(false)}
+            />
+            <div className="tooltip-panel">
+              <Link
+                href="/settings"
+                className="flex items-center gap-2 py-1 text-sm font-bold"
+                style={{ color: "var(--text)" }}
+                onClick={() => setMenuOpen(false)}
+              >
+                ⚙ 設定
+              </Link>
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="flex items-center gap-2 py-1 text-sm font-bold w-full text-left"
+                style={{
+                  color: "var(--text)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                ↩ サインアウト
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
