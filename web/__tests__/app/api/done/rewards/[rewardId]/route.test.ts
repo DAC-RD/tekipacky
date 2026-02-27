@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeRequest } from "../../../../../helpers/request";
+import type { UserModel, DoneRewardModel } from "@/app/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -29,18 +30,22 @@ const existingDoneReward = {
   pt: 4,
   count: 2,
   date: "2024-01-15",
-};
+} satisfies DoneRewardModel;
 
 describe("PATCH /api/done/rewards/[rewardId]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "UTC",
       mode: "NORMAL",
       points: 50,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
   });
 
   it("delta=+1 で count が増加し user.points が decrement される（リワードのため逆）", async () => {
@@ -92,7 +97,7 @@ describe("PATCH /api/done/rewards/[rewardId]", () => {
     mockPrisma.doneReward.findUnique.mockResolvedValue({
       ...existingDoneReward,
       count: 1,
-    } as never);
+    } satisfies DoneRewardModel as never);
     mockPrisma.doneReward.delete.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
@@ -106,7 +111,7 @@ describe("PATCH /api/done/rewards/[rewardId]", () => {
   });
 
   it("doneReward が存在しない場合は { ok: true } を返す", async () => {
-    mockPrisma.doneReward.findUnique.mockResolvedValue(null as never);
+    mockPrisma.doneReward.findUnique.mockResolvedValue(null);
 
     const req = makeRequest("PATCH", "/api/done/rewards/99", { delta: 1 });
     const res = await PATCH(req, {

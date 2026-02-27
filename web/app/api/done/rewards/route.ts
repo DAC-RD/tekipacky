@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
-import {
-  calcRewardPt,
-  getDateForTimezone,
-  modeFromDb,
-  toDoneItemResponse,
-} from "@/lib/utils";
+import { calcRewardPt, getDateForTimezone, modeFromDb } from "@/lib/utils";
+import { upsertDoneReward } from "@/lib/done";
 
 export async function POST(req: NextRequest) {
   const userId = getUserId(req);
@@ -36,25 +32,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "insufficient points" }, { status: 400 });
   }
 
-  // 既存レコードがあればcountを+1、なければ新規作成
-  const done = await prisma.doneReward.upsert({
-    where: { userId_rewardId_date: { userId, rewardId, date: today } },
-    create: {
-      userId,
-      rewardId,
-      title: reward.title,
-      pt,
-      count: 1,
-      date: today,
-    },
-    update: { count: { increment: 1 } },
-  });
+  const doneItem = await upsertDoneReward(
+    userId,
+    rewardId,
+    today,
+    reward.title,
+    pt,
+  );
 
-  // ポイントを減算
-  await prisma.user.update({
-    where: { id: userId },
-    data: { points: { decrement: pt } },
-  });
-
-  return NextResponse.json(toDoneItemResponse(done));
+  return NextResponse.json(doneItem);
 }

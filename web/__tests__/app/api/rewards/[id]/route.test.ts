@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeRequest } from "../../../../helpers/request";
+import type { RewardModel } from "@/app/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -31,7 +32,9 @@ describe("PUT /api/rewards/[id]", () => {
       satisfaction: 3,
       time: 2,
       price: 2,
-    };
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies RewardModel;
     mockPrisma.reward.update.mockResolvedValue(updated as never);
 
     const req = makeRequest("PUT", "/api/rewards/1", {
@@ -58,7 +61,9 @@ describe("PUT /api/rewards/[id]", () => {
       satisfaction: 1,
       time: 1,
       price: 1,
-    };
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies RewardModel;
     mockPrisma.reward.update.mockResolvedValue(updated as never);
 
     const req = makeRequest("PUT", "/api/rewards/1", {

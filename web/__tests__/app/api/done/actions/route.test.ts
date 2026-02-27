@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { makeRequest } from "../../../../helpers/request";
+import type {
+  UserModel,
+  ActionModel,
+  DoneActionModel,
+} from "@/app/generated/prisma/models";
 
 // Prisma をモック（DB接続なしでテスト）
 vi.mock("@/lib/prisma", () => ({
@@ -33,11 +38,15 @@ describe("POST /api/done/actions", () => {
   it("normalモードで hurdle×time のポイントを計算して付与する", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "Asia/Tokyo",
       mode: "NORMAL",
       points: 0,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     mockPrisma.action.findUniqueOrThrow.mockResolvedValue({
       id: 1,
       userId: USER_ID,
@@ -46,16 +55,18 @@ describe("POST /api/done/actions", () => {
       time: 3,
       desc: "",
       tags: [],
-    } as never);
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies ActionModel as never);
     mockPrisma.doneAction.upsert.mockResolvedValue({
       id: 1,
       actionId: 1,
+      userId: USER_ID,
       title: "朝ごはんを食べる",
       pt: 6, // 2 * 3 * 1.0 = 6
       count: 1,
       date: "2024-01-15",
-      userId: USER_ID,
-    } as never);
+    } satisfies DoneActionModel as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
     const req = makeRequest("POST", "/api/done/actions", { actionId: 1 });
@@ -71,11 +82,15 @@ describe("POST /api/done/actions", () => {
   it("easyモードで earnMul=1.5 が適用される", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "Asia/Tokyo",
       mode: "EASY",
       points: 0,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     mockPrisma.action.findUniqueOrThrow.mockResolvedValue({
       id: 1,
       userId: USER_ID,
@@ -84,17 +99,19 @@ describe("POST /api/done/actions", () => {
       time: 2,
       desc: "",
       tags: [],
-    } as never);
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies ActionModel as never);
     // 2 * 2 * 1.5 = 6
     mockPrisma.doneAction.upsert.mockResolvedValue({
       id: 1,
       actionId: 1,
+      userId: USER_ID,
       title: "散歩する",
       pt: 6,
       count: 1,
       date: "2024-01-15",
-      userId: USER_ID,
-    } as never);
+    } satisfies DoneActionModel as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
     const req = makeRequest("POST", "/api/done/actions", { actionId: 1 });
@@ -107,11 +124,15 @@ describe("POST /api/done/actions", () => {
   it("サーバー側でポイント計算される（upsert の pt はサーバー計算値）", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "Asia/Tokyo",
       mode: "NORMAL",
       points: 0,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     mockPrisma.action.findUniqueOrThrow.mockResolvedValue({
       id: 1,
       userId: USER_ID,
@@ -120,16 +141,18 @@ describe("POST /api/done/actions", () => {
       time: 4,
       desc: "",
       tags: [],
-    } as never);
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies ActionModel as never);
     mockPrisma.doneAction.upsert.mockResolvedValue({
       id: 1,
       actionId: 1,
+      userId: USER_ID,
       title: "テスト行動",
       pt: 12, // 3 * 4 * 1.0 = 12
       count: 1,
       date: "2024-01-15",
-      userId: USER_ID,
-    } as never);
+    } satisfies DoneActionModel as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
     const req = makeRequest("POST", "/api/done/actions", { actionId: 1 });
@@ -146,11 +169,15 @@ describe("POST /api/done/actions", () => {
   it("user.update で points が increment される", async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "UTC",
       mode: "NORMAL",
       points: 0,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
     mockPrisma.action.findUniqueOrThrow.mockResolvedValue({
       id: 1,
       userId: USER_ID,
@@ -159,16 +186,18 @@ describe("POST /api/done/actions", () => {
       time: 1,
       desc: "",
       tags: [],
-    } as never);
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies ActionModel as never);
     mockPrisma.doneAction.upsert.mockResolvedValue({
       id: 1,
       actionId: 1,
+      userId: USER_ID,
       title: "テスト",
       pt: 1,
       count: 1,
       date: "2024-01-15",
-      userId: USER_ID,
-    } as never);
+    } satisfies DoneActionModel as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
     const req = makeRequest("POST", "/api/done/actions", { actionId: 1 });

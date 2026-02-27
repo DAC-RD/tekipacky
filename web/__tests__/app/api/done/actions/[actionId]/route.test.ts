@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeRequest } from "../../../../../helpers/request";
+import type { UserModel, DoneActionModel } from "@/app/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -29,18 +30,22 @@ const existingDoneAction = {
   pt: 5,
   count: 2,
   date: "2024-01-15",
-};
+} satisfies DoneActionModel;
 
 describe("PATCH /api/done/actions/[actionId]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: USER_ID,
+      name: null,
+      email: null,
+      emailVerified: null,
       timezone: "UTC",
       mode: "NORMAL",
       points: 50,
       createdAt: new Date(),
-    } as never);
+      updatedAt: new Date(),
+    } satisfies UserModel as never);
   });
 
   it("delta=+1 で count が増加し user.points が increment される", async () => {
@@ -88,7 +93,7 @@ describe("PATCH /api/done/actions/[actionId]", () => {
     mockPrisma.doneAction.findUnique.mockResolvedValue({
       ...existingDoneAction,
       count: 1, // count=1 で delta=-1 → 0 以下
-    } as never);
+    } satisfies DoneActionModel as never);
     mockPrisma.doneAction.delete.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 
@@ -102,7 +107,7 @@ describe("PATCH /api/done/actions/[actionId]", () => {
   });
 
   it("doneAction が存在しない場合は { ok: true } を返す", async () => {
-    mockPrisma.doneAction.findUnique.mockResolvedValue(null as never);
+    mockPrisma.doneAction.findUnique.mockResolvedValue(null);
 
     const req = makeRequest("PATCH", "/api/done/actions/99", { delta: 1 });
     const res = await PATCH(req, {
@@ -119,7 +124,7 @@ describe("PATCH /api/done/actions/[actionId]", () => {
     mockPrisma.doneAction.findUnique.mockResolvedValue({
       ...existingDoneAction,
       pt: 8, // DB に保存された pt
-    } as never);
+    } satisfies DoneActionModel as never);
     mockPrisma.doneAction.update.mockResolvedValue({} as never);
     mockPrisma.user.update.mockResolvedValue({} as never);
 

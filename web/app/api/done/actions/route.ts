@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
-import {
-  calcActionPt,
-  getDateForTimezone,
-  modeFromDb,
-  toDoneItemResponse,
-} from "@/lib/utils";
+import { calcActionPt, getDateForTimezone, modeFromDb } from "@/lib/utils";
+import { upsertDoneAction } from "@/lib/done";
 
 export async function POST(req: NextRequest) {
   const userId = getUserId(req);
@@ -26,25 +22,13 @@ export async function POST(req: NextRequest) {
   // サーバー側でptを計算（クライアント値を信頼しない）
   const pt = calcActionPt(action.hurdle, action.time, modeFromDb(user.mode));
 
-  // 既存レコードがあればcountを+1、なければ新規作成
-  const done = await prisma.doneAction.upsert({
-    where: { userId_actionId_date: { userId, actionId, date: today } },
-    create: {
-      userId,
-      actionId,
-      title: action.title,
-      pt,
-      count: 1,
-      date: today,
-    },
-    update: { count: { increment: 1 } },
-  });
+  const doneItem = await upsertDoneAction(
+    userId,
+    actionId,
+    today,
+    action.title,
+    pt,
+  );
 
-  // ポイントを更新
-  await prisma.user.update({
-    where: { id: userId },
-    data: { points: { increment: pt } },
-  });
-
-  return NextResponse.json(toDoneItemResponse(done));
+  return NextResponse.json(doneItem);
 }

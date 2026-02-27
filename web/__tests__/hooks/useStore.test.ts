@@ -382,6 +382,22 @@ describe("useStore", () => {
       ).toBeUndefined();
     });
 
+    it("API が ok=false を返すと throw される", async () => {
+      mockFetchJson(sampleState);
+      const { result } = renderHook(() => useStore());
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
+
+      await expect(
+        act(async () => {
+          await result.current.deleteItem("action", 1);
+        }),
+      ).rejects.toThrow("削除に失敗しました");
+    });
+
     it("DELETE /api/actions/{id} が呼ばれる", async () => {
       mockFetchJson(sampleState);
       const { result } = renderHook(() => useStore());
@@ -480,6 +496,30 @@ describe("useStore", () => {
         "/api/actions/1",
         expect.objectContaining({ method: "PUT" }),
       );
+    });
+
+    it("API が ok=false を返すと throw される", async () => {
+      mockFetchJson(sampleState);
+      const { result } = renderHook(() => useStore());
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+      await expect(
+        act(async () => {
+          await result.current.saveItem({
+            type: "action",
+            id: null,
+            title: "失敗する行動",
+            desc: "",
+            tags: [],
+            hurdle: 1,
+            time: 1,
+          });
+        }),
+      ).rejects.toThrow("保存に失敗しました");
     });
 
     it("新規アクション保存後に actions に追加される", async () => {

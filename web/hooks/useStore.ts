@@ -143,6 +143,7 @@ export function useStore() {
       headers: JSON_HEADERS,
       body: JSON.stringify(data),
     });
+    if (!res.ok) throw new Error(`保存に失敗しました（${res.status}）`);
     const item = await res.json();
 
     if (isAction) {
@@ -169,7 +170,8 @@ export function useStore() {
     async (type: Tab, id: number): Promise<void> => {
       const url =
         type === "action" ? `/api/actions/${id}` : `/api/rewards/${id}`;
-      await fetch(url, { method: "DELETE" });
+      const res = await fetch(url, { method: "DELETE" });
+      if (!res.ok) throw new Error(`削除に失敗しました（${res.status}）`);
 
       setState((prev) => ({
         ...prev,

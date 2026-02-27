@@ -4,36 +4,9 @@ import { useEffect, useState } from "react";
 import { Action, Mode, Reward, Tab } from "@/lib/types";
 import { MODES } from "@/lib/constants";
 import { calcActionPt, calcRewardPt } from "@/lib/utils";
-
-const HURDLE_OPTIONS = [
-  { value: 1, label: "低 (×1)" },
-  { value: 2, label: "中 (×2)" },
-  { value: 3, label: "高 (×3)" },
-];
-
-const TIME_OPTIONS = [
-  { value: 1, label: "5分以内 (×1)" },
-  { value: 2, label: "15分以内 (×2)" },
-  { value: 3, label: "30分以内 (×3)" },
-  { value: 4, label: "1時間以内 (×4)" },
-  { value: 5, label: "3時間以内 (×5)" },
-  { value: 6, label: "3時間以上 (×6)" },
-];
-
-const SATISFACTION_OPTIONS = [
-  { value: 1, label: "小 (×1)" },
-  { value: 2, label: "中 (×2)" },
-  { value: 3, label: "大 (×3)" },
-];
-
-const PRICE_OPTIONS = [
-  { value: 1, label: "0円 (×1)" },
-  { value: 2, label: "500円以内 (×2)" },
-  { value: 3, label: "1000円以内 (×3)" },
-  { value: 4, label: "5000円以内 (×4)" },
-  { value: 5, label: "1万円以内 (×5)" },
-  { value: 6, label: "1万円以上 (×6)" },
-];
+import { useTagManager } from "@/hooks/useTagManager";
+import ActionForm from "@/components/ActionForm";
+import RewardForm from "@/components/RewardForm";
 
 export interface ModalSaveData {
   type: Tab;
@@ -58,30 +31,6 @@ interface Props {
   onSave: (data: ModalSaveData) => void;
   onDelete: (type: Tab, id: number) => void;
   onClose: () => void;
-}
-
-function OptionButton({
-  label,
-  selected,
-  onClick,
-  variant,
-}: {
-  label: string;
-  selected: boolean;
-  onClick: () => void;
-  variant: "action" | "reward";
-}) {
-  const selectedClass =
-    variant === "action" ? "selected-action" : "selected-reward";
-  return (
-    <button
-      type="button"
-      className={`option-btn ${selected ? selectedClass : ""}`}
-      onClick={onClick}
-    >
-      {label}
-    </button>
-  );
 }
 
 export default function ItemModal({
@@ -110,10 +59,6 @@ export default function ItemModal({
   const [modalType, setModalType] = useState<Tab>(initialType);
   const [title, setTitle] = useState(editItem?.title ?? "");
   const [desc, setDesc] = useState(editItem?.desc ?? "");
-  const [tags, setTags] = useState<string[]>(
-    editItem ? [...editItem.tags] : [],
-  );
-  const [tagInput, setTagInput] = useState("");
   const [hurdle, setHurdle] = useState(editAction?.hurdle ?? 1);
   const [time, setTime] = useState(editAction?.time ?? 1);
   const [satisfaction, setSatisfaction] = useState(
@@ -121,6 +66,22 @@ export default function ItemModal({
   );
   const [rewardTime, setRewardTime] = useState(editReward?.time ?? 1);
   const [price, setPrice] = useState(editReward?.price ?? 1);
+
+  const isAction = modalType === "action";
+
+  const existingTagPool = isAction
+    ? [...new Set(actions.flatMap((a) => a.tags))].sort()
+    : [...new Set(rewards.flatMap((r) => r.tags))].sort();
+
+  const {
+    tags,
+    tagInput,
+    setTagInput,
+    filteredTagSuggestions,
+    addTag,
+    removeTag,
+    toggleExistingTag,
+  } = useTagManager(editItem ? [...editItem.tags] : [], existingTagPool);
 
   // Scroll lock when modal is open
   useEffect(() => {
@@ -133,7 +94,6 @@ export default function ItemModal({
 
   if (!open) return null;
 
-  const isAction = modalType === "action";
   const modeConfig = MODES[mode];
   const emoji = modeConfig.emoji;
 
@@ -145,31 +105,21 @@ export default function ItemModal({
     ? `${emoji} 獲得 ×${modeConfig.earnMul}`
     : `${emoji} 消費 ×${modeConfig.spendMul}`;
 
-  const existingTagPool = isAction
-    ? [...new Set(actions.flatMap((a) => a.tags))].sort()
-    : [...new Set(rewards.flatMap((r) => r.tags))].sort();
+  const activeColor = isAction ? "var(--accent)" : "var(--reward)";
+  const activeBg = isAction ? "rgba(255,107,53,0.15)" : "rgba(6,214,160,0.15)";
 
-  const filteredTagSuggestions = tagInput
-    ? existingTagPool.filter((t) =>
-        t.toLowerCase().includes(tagInput.toLowerCase()),
-      )
-    : existingTagPool;
-
-  function addTag(tag: string) {
-    if (!tag.trim() || tags.includes(tag.trim())) return;
-    setTags((prev) => [...prev, tag.trim()]);
+  function handleActionChange(field: "hurdle" | "time", value: number) {
+    if (field === "hurdle") setHurdle(value);
+    else setTime(value);
   }
 
-  function removeTag(tag: string) {
-    setTags((prev) => prev.filter((t) => t !== tag));
-  }
-
-  function toggleExistingTag(tag: string) {
-    if (tags.includes(tag)) {
-      removeTag(tag);
-    } else {
-      addTag(tag);
-    }
+  function handleRewardChange(
+    field: "satisfaction" | "time" | "price",
+    value: number,
+  ) {
+    if (field === "satisfaction") setSatisfaction(value);
+    else if (field === "time") setRewardTime(value);
+    else setPrice(value);
   }
 
   function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -206,9 +156,6 @@ export default function ItemModal({
     if (!confirm("本当に削除しますか？")) return;
     onDelete(modalType, editId);
   }
-
-  const activeColor = isAction ? "var(--accent)" : "var(--reward)";
-  const activeBg = isAction ? "rgba(255,107,53,0.15)" : "rgba(6,214,160,0.15)";
 
   return (
     <div
@@ -424,107 +371,20 @@ export default function ItemModal({
             )}
           </div>
 
-          {/* Action fields */}
-          {isAction && (
-            <>
-              <div>
-                <label className="form-label">ハードル（面倒くささ）</label>
-                <div className="option-group">
-                  {HURDLE_OPTIONS.map((opt) => (
-                    <OptionButton
-                      key={opt.value}
-                      label={opt.label}
-                      selected={hurdle === opt.value}
-                      onClick={() => setHurdle(opt.value)}
-                      variant="action"
-                    />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="form-label">かかる時間</label>
-                <div
-                  className="option-group"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: 6,
-                  }}
-                >
-                  {TIME_OPTIONS.map((opt) => (
-                    <OptionButton
-                      key={opt.value}
-                      label={opt.label}
-                      selected={time === opt.value}
-                      onClick={() => setTime(opt.value)}
-                      variant="action"
-                    />
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Reward fields */}
-          {!isAction && (
-            <>
-              <div>
-                <label className="form-label">満足度</label>
-                <div className="option-group">
-                  {SATISFACTION_OPTIONS.map((opt) => (
-                    <OptionButton
-                      key={opt.value}
-                      label={opt.label}
-                      selected={satisfaction === opt.value}
-                      onClick={() => setSatisfaction(opt.value)}
-                      variant="reward"
-                    />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="form-label">かかる時間</label>
-                <div
-                  className="option-group"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: 6,
-                  }}
-                >
-                  {TIME_OPTIONS.map((opt) => (
-                    <OptionButton
-                      key={opt.value}
-                      label={opt.label}
-                      selected={rewardTime === opt.value}
-                      onClick={() => setRewardTime(opt.value)}
-                      variant="reward"
-                    />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="form-label">金額</label>
-                <div
-                  className="option-group"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: 6,
-                  }}
-                >
-                  {PRICE_OPTIONS.map((opt) => (
-                    <OptionButton
-                      key={opt.value}
-                      label={opt.label}
-                      selected={price === opt.value}
-                      onClick={() => setPrice(opt.value)}
-                      variant="reward"
-                    />
-                  ))}
-                </div>
-              </div>
-            </>
+          {/* Action / Reward fields */}
+          {isAction ? (
+            <ActionForm
+              hurdle={hurdle}
+              time={time}
+              onChange={handleActionChange}
+            />
+          ) : (
+            <RewardForm
+              satisfaction={satisfaction}
+              time={rewardTime}
+              price={price}
+              onChange={handleRewardChange}
+            />
           )}
 
           {/* Point preview */}
