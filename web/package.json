@@ -14,7 +14,7 @@
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
     "prepare": "husky",
-    "seed": "dotenv -e .env -- tsx prisma/seed.ts"
+    "seed": "prisma db seed"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
