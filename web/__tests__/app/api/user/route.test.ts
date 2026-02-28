@@ -66,6 +66,20 @@ describe("PATCH /api/user", () => {
     );
   });
 
+  describe("バリデーション - 不正値で 400 を返す", () => {
+    it.each([
+      [{ mode: "invalid" }, "不正なモード名"],
+      [{ mode: "" }, "空文字モード"],
+      [{}, "mode が欠如"],
+    ])("400 を返す: %s", async (body) => {
+      const req = makeRequest("PATCH", "/api/user", body);
+      const res = await PATCH(req);
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.error).toBeDefined();
+    });
+  });
+
   it("userId が where 条件に含まれる", async () => {
     const req = makeRequest("PATCH", "/api/user", { mode: "normal" });
     await PATCH(req);

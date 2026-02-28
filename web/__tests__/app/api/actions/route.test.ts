@@ -104,6 +104,24 @@ describe("POST /api/actions", () => {
     );
   });
 
+  describe("バリデーション - 不正値で 400 を返す", () => {
+    it.each([
+      [{ title: "", hurdle: 1, time: 1 }, "title が空文字"],
+      [{ hurdle: 1, time: 1 }, "title が欠如"],
+      [{ title: "x", hurdle: 0, time: 1 }, "hurdle が 0"],
+      [{ title: "x", hurdle: 6, time: 1 }, "hurdle が 6"],
+      [{ title: "x", hurdle: 1.5, time: 1 }, "hurdle が小数"],
+      [{ title: "x", hurdle: 1, time: 0 }, "time が 0"],
+      [{ title: "x", hurdle: 1, time: 481 }, "time が 481"],
+    ])("400 を返す: %s", async (body) => {
+      const req = makeRequest("POST", "/api/actions", body);
+      const res = await POST(req);
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.error).toBeDefined();
+    });
+  });
+
   it("userId が create データに含まれる", async () => {
     const created = {
       id: 1,
