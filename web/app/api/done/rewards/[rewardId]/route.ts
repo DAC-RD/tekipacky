@@ -35,20 +35,21 @@ export async function PATCH(
 
   const newCount = existing.count + delta;
 
-  if (newCount <= 0) {
-    await prisma.doneReward.delete({ where: { id: existing.id } });
-  } else {
-    await prisma.doneReward.update({
-      where: { id: existing.id },
-      data: { count: newCount },
-    });
-  }
-
   // DBに保存済みのptを使用（クライアント値を信頼しない）
   // ご褒美はdeltaが+なら消費増加（減算）、-なら消費減少（加算）
-  await prisma.user.update({
-    where: { id: userId },
-    data: { points: { decrement: existing.pt * delta } },
+  await prisma.$transaction(async (tx) => {
+    if (newCount <= 0) {
+      await tx.doneReward.delete({ where: { id: existing.id } });
+    } else {
+      await tx.doneReward.update({
+        where: { id: existing.id },
+        data: { count: newCount },
+      });
+    }
+    await tx.user.update({
+      where: { id: userId },
+      data: { points: { decrement: existing.pt * delta } },
+    });
   });
 
   return NextResponse.json({ ok: true });

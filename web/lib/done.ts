@@ -13,15 +13,17 @@ export async function upsertDoneAction(
   title: string,
   pt: number,
 ): Promise<DoneItem> {
-  const done = await prisma.doneAction.upsert({
-    where: { userId_actionId_date: { userId, actionId, date: today } },
-    create: { userId, actionId, title, pt, count: 1, date: today },
-    update: { count: { increment: 1 } },
-  });
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { points: { increment: pt } },
+  const done = await prisma.$transaction(async (tx) => {
+    const done = await tx.doneAction.upsert({
+      where: { userId_actionId_date: { userId, actionId, date: today } },
+      create: { userId, actionId, title, pt, count: 1, date: today },
+      update: { count: { increment: 1 } },
+    });
+    await tx.user.update({
+      where: { id: userId },
+      data: { points: { increment: pt } },
+    });
+    return done;
   });
 
   return toDoneItemResponse(done);
@@ -38,15 +40,17 @@ export async function upsertDoneReward(
   title: string,
   pt: number,
 ): Promise<DoneItem> {
-  const done = await prisma.doneReward.upsert({
-    where: { userId_rewardId_date: { userId, rewardId, date: today } },
-    create: { userId, rewardId, title, pt, count: 1, date: today },
-    update: { count: { increment: 1 } },
-  });
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { points: { decrement: pt } },
+  const done = await prisma.$transaction(async (tx) => {
+    const done = await tx.doneReward.upsert({
+      where: { userId_rewardId_date: { userId, rewardId, date: today } },
+      create: { userId, rewardId, title, pt, count: 1, date: today },
+      update: { count: { increment: 1 } },
+    });
+    await tx.user.update({
+      where: { id: userId },
+      data: { points: { decrement: pt } },
+    });
+    return done;
   });
 
   return toDoneItemResponse(done);

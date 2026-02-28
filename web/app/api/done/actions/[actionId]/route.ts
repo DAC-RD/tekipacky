@@ -35,19 +35,20 @@ export async function PATCH(
 
   const newCount = existing.count + delta;
 
-  if (newCount <= 0) {
-    await prisma.doneAction.delete({ where: { id: existing.id } });
-  } else {
-    await prisma.doneAction.update({
-      where: { id: existing.id },
-      data: { count: newCount },
-    });
-  }
-
   // DBに保存済みのptを使用（クライアント値を信頼しない）
-  await prisma.user.update({
-    where: { id: userId },
-    data: { points: { increment: existing.pt * delta } },
+  await prisma.$transaction(async (tx) => {
+    if (newCount <= 0) {
+      await tx.doneAction.delete({ where: { id: existing.id } });
+    } else {
+      await tx.doneAction.update({
+        where: { id: existing.id },
+        data: { count: newCount },
+      });
+    }
+    await tx.user.update({
+      where: { id: userId },
+      data: { points: { increment: existing.pt * delta } },
+    });
   });
 
   return NextResponse.json({ ok: true });
