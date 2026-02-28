@@ -5,7 +5,7 @@ import type {
   UserModel,
   ActionModel,
   DoneActionModel,
-} from "@/app/generated/prisma/models";
+} from "@/lib/generated/prisma/models";
 
 // Prisma をモック（DB接続なしでテスト）
 vi.mock("@/lib/prisma", () => {

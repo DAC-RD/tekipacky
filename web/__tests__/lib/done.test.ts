@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type {
   DoneActionModel,
   DoneRewardModel,
-} from "@/app/generated/prisma/models";
+} from "@/lib/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => {
   const $transaction = vi.fn();

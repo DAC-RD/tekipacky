@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeRequest } from "../../../../../helpers/request";
-import type { UserModel, DoneActionModel } from "@/app/generated/prisma/models";
+import type { UserModel, DoneActionModel } from "@/lib/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => {
   const $transaction = vi.fn();
