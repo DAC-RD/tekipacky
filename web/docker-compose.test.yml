@@ -1,0 +1,21 @@
+name: tekipacky-test
+
+services:
+  # 統合テスト専用DB（tmpfs: コンテナ停止でデータが消える）
+  # 起動: docker compose -f docker-compose.test.yml up -d
+  # 停止: docker compose -f docker-compose.test.yml down
+  db-test:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: tekipacky_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d tekipacky_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

@@ -12,6 +12,8 @@
     "format:check": "prettier --check .",
     "test": "vitest",
     "test:ui": "vitest --ui",
+    "test:integration": "dotenv -e .env.test --override -- vitest run --config vitest.config.integration.ts",
+    "test:integration:ci": "vitest run --config vitest.config.integration.ts",
     "test:e2e": "playwright test",
     "prepare": "husky",
     "seed": "prisma db seed"
