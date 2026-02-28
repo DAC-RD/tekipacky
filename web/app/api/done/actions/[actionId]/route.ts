@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
 import { getDateForTimezone } from "@/lib/utils";
+import { ValidationError, assertNonZeroInt } from "@/lib/validate";
 
 /** count を delta 分増減する。0以下になったレコードを削除する */
 export async function PATCH(
@@ -11,7 +12,16 @@ export async function PATCH(
   const userId = getUserId(req);
   const { actionId } = await params;
   const body = await req.json();
-  const { delta } = body as { delta: number };
+  const { delta } = body;
+
+  try {
+    assertNonZeroInt(delta, "delta");
+  } catch (e) {
+    if (e instanceof ValidationError) {
+      return NextResponse.json({ error: e.message }, { status: 400 });
+    }
+    throw e;
+  }
 
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
@@ -35,19 +45,20 @@ export async function PATCH(
 
   const newCount = existing.count + delta;
 
-  if (newCount <= 0) {
-    await prisma.doneAction.delete({ where: { id: existing.id } });
-  } else {
-    await prisma.doneAction.update({
-      where: { id: existing.id },
-      data: { count: newCount },
-    });
-  }
-
   // DBに保存済みのptを使用（クライアント値を信頼しない）
-  await prisma.user.update({
-    where: { id: userId },
-    data: { points: { increment: existing.pt * delta } },
+  await prisma.$transaction(async (tx) => {
+    if (newCount <= 0) {
+      await tx.doneAction.delete({ where: { id: existing.id } });
+    } else {
+      await tx.doneAction.update({
+        where: { id: existing.id },
+        data: { count: newCount },
+      });
+    }
+    await tx.user.update({
+      where: { id: userId },
+      data: { points: { increment: existing.pt * delta } },
+    });
   });
 
   return NextResponse.json({ ok: true });

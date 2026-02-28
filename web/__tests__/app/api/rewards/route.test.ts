@@ -80,6 +80,45 @@ describe("POST /api/rewards", () => {
     );
   });
 
+  describe("バリデーション - 不正値で 400 を返す", () => {
+    it.each([
+      {
+        body: { title: "", satisfaction: 1, time: 1, price: 1 },
+        label: "title が空文字",
+      },
+      { body: { satisfaction: 1, time: 1, price: 1 }, label: "title が欠如" },
+      {
+        body: { title: "x", satisfaction: 0, time: 1, price: 1 },
+        label: "satisfaction が 0",
+      },
+      {
+        body: { title: "x", satisfaction: 6, time: 1, price: 1 },
+        label: "satisfaction が 6",
+      },
+      {
+        body: { title: "x", satisfaction: 1, time: 0, price: 1 },
+        label: "time が 0",
+      },
+      {
+        body: { title: "x", satisfaction: 1, time: 481, price: 1 },
+        label: "time が 481",
+      },
+      {
+        body: { title: "x", satisfaction: 1, time: 1, price: 0 },
+        label: "price が 0",
+      },
+    ])(
+      "400 を返す: $label",
+      async ({ body }: { body: Record<string, unknown>; label: string }) => {
+        const req = makeRequest("POST", "/api/rewards", body);
+        const res = await POST(req);
+        expect(res.status).toBe(400);
+        const json = await res.json();
+        expect(json.error).toBeDefined();
+      },
+    );
+  });
+
   it("tags が省略されたときデフォルト空配列が設定される", async () => {
     const created = {
       id: 1,

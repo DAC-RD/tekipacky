@@ -13,8 +13,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 // モジュールをモック化（importより前に記述）
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+// Done系APIは $transaction を使うため、factory 関数パターンで定義する
+vi.mock("@/lib/prisma", () => {
+  const $transaction = vi.fn();
+  const prismaMock = {
     user: {
       findUniqueOrThrow: vi.fn(),
       update: vi.fn(),
@@ -33,6 +35,20 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
     },
     // ... 使用するモデルのみ定義
+    $transaction,
+  };
+  // コールバック関数を受け取り、prismaMock を tx として渡す
+  $transaction.mockImplementation((fn: (tx: unknown) => Promise<unknown>) =>
+    fn(prismaMock),
+  );
+  return { prisma: prismaMock };
+});
+
+// $transaction を使わない場合（actions/rewards 等）は簡略形でも可
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    action: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    // ...
   },
 }));
 
@@ -48,6 +64,8 @@ const mockPrisma = vi.mocked(prisma, true);
 - `vi.mock()` は `import` より前（ホイスティング）に実行される
 - `vi.mocked(prisma, true)` で深いネストのモックも型付きになる
 - テストで使うメソッドのみ定義すればよい
+- `$transaction` を含むルート（done系）は factory 関数パターンで `prismaMock` 自体を tx として渡す（こうすることでトランザクション内のモック呼び出しを `expect` で確認できる）
+- `vi.clearAllMocks()` はモック呼び出し履歴をリセットするが `mockImplementation` は保持されるため、`$transaction` の実装は `beforeEach` の外でも問題なし
 
 ---
 

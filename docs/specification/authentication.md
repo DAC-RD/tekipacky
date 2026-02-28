@@ -65,7 +65,12 @@ import { authConfig } from "@/auth.config";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
-  providers: [Resend({ from: process.env.AUTH_EMAIL_FROM })],
+  providers: [
+    Resend({
+      from: process.env.AUTH_EMAIL_FROM,
+      maxAge: 60 * 60, // マジックリンク有効期限: 1時間（秒単位）
+    }),
+  ],
   session: { strategy: "jwt" },
 });
 ```
@@ -211,7 +216,7 @@ User テーブルに追加されたフィールド:
   → VerificationToken 生成・保存
       identifier = "email-change:${userId}|${newEmail}"
       token      = crypto.randomUUID()
-      expires    = 24時間後
+      expires    = 1時間後
   → Resend で確認メール送信（リンク: ${AUTH_URL}/settings/email-verify?token=xxx）
 
 [ユーザーがメール内リンクをクリック]
@@ -249,8 +254,8 @@ User テーブルに追加されたフィールド:
 | 項目 | 設計 |
 |---|---|
 | セッション | JWT（Cookie に格納）。サーバー DB に依存しない |
-| トークン有効期限 | マジックリンク: 24時間（Resend デフォルト） |
-| メール変更トークン | VerificationToken テーブルを流用。24時間有効 |
+| トークン有効期限 | マジックリンク: **1時間**（`lib/auth.ts` の `maxAge: 3600`） |
+| メール変更トークン | VerificationToken テーブルを流用。**1時間**有効（`expires = Date.now() + 60 * 60 * 1000`） |
 | API 認証 | ミドルウェアで JWT を検証し `x-user-id` ヘッダーを注入。APIルートはヘッダーのみ参照 |
 | ユーザー識別 | `session.user.id` = Prisma User の CUID（`token.sub` から取得） |
 | パスワード | 不要（マジックリンクのみ） |

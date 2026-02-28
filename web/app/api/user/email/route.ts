@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   const token = crypto.randomUUID();
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1時間
   const identifier = `${IDENTIFIER_PREFIX}${userId}|${newEmail}`;
 
   // ユーザーの既存トークンを削除して新しいトークンを作成
@@ -50,9 +50,19 @@ export async function POST(req: NextRequest) {
   });
 
   // Resend でメール送信
-  const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
-  const verifyUrl = `${baseUrl}/settings/email-verify?token=${token}`;
-  await fetch("https://api.resend.com/emails", {
+  const baseUrl = process.env.AUTH_URL;
+  if (!baseUrl && process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      {
+        error:
+          "サーバー設定エラーが発生しました。管理者にお問い合わせください。",
+      },
+      { status: 500 },
+    );
+  }
+  const resolvedUrl = baseUrl ?? "http://localhost:3000";
+  const verifyUrl = `${resolvedUrl}/settings/email-verify?token=${token}`;
+  const resendRes = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.AUTH_RESEND_KEY}`,
@@ -66,11 +76,22 @@ export async function POST(req: NextRequest) {
         <p>テキパッキーのメールアドレス変更リクエストを受け付けました。</p>
         <p>以下のリンクをクリックして、メールアドレスの変更を完了してください。</p>
         <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-        <p>このリンクは24時間有効です。</p>
+        <p>このリンクは1時間有効です。</p>
         <p>このメールに心当たりがない場合は、無視してください。</p>
       `,
     }),
   });
+  if (!resendRes.ok) {
+    const err = await resendRes.json().catch(() => ({}));
+    console.error("Resend error:", err);
+    return NextResponse.json(
+      {
+        error:
+          "メール送信に失敗しました。しばらく経ってから再試行してください。",
+      },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }

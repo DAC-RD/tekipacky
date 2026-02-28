@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
 import { toActionResponse } from "@/lib/utils";
+import {
+  ValidationError,
+  assertStringInRange,
+  assertInt,
+  assertOptionalString,
+  assertOptionalStringArray,
+} from "@/lib/validate";
 
 export async function PUT(
   req: NextRequest,
@@ -11,6 +18,19 @@ export async function PUT(
   const { id } = await params;
   const body = await req.json();
   const { title, desc, tags, hurdle, time } = body;
+
+  try {
+    assertStringInRange(title, "title", 1, 200);
+    assertInt(hurdle, "hurdle", 1, 5);
+    assertInt(time, "time", 1, 480);
+    assertOptionalString(desc, "desc");
+    assertOptionalStringArray(tags, "tags");
+  } catch (e) {
+    if (e instanceof ValidationError) {
+      return NextResponse.json({ error: e.message }, { status: 400 });
+    }
+    throw e;
+  }
 
   const action = await prisma.action.update({
     where: { id: Number(id), userId },

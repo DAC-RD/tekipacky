@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeRequest } from "../../../../../helpers/request";
 import type { UserModel, DoneActionModel } from "@/app/generated/prisma/models";
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/prisma", () => {
+  const $transaction = vi.fn();
+  const prismaMock = {
     user: {
       findUniqueOrThrow: vi.fn(),
       update: vi.fn(),
@@ -13,8 +14,13 @@ vi.mock("@/lib/prisma", () => ({
       delete: vi.fn(),
       update: vi.fn(),
     },
-  },
-}));
+    $transaction,
+  };
+  $transaction.mockImplementation((fn: (tx: unknown) => Promise<unknown>) =>
+    fn(prismaMock),
+  );
+  return { prisma: prismaMock };
+});
 
 import { prisma } from "@/lib/prisma";
 import { PATCH } from "@/app/api/done/actions/[actionId]/route";
@@ -104,6 +110,26 @@ describe("PATCH /api/done/actions/[actionId]", () => {
       expect.objectContaining({ where: { id: existingDoneAction.id } }),
     );
     expect(mockPrisma.doneAction.update).not.toHaveBeenCalled();
+  });
+
+  describe("バリデーション - 不正値で 400 を返す", () => {
+    it.each([
+      { body: { delta: 0 }, label: "delta が 0" },
+      { body: { delta: 1.5 }, label: "delta が小数" },
+      { body: { delta: "1" }, label: "delta が文字列" },
+      { body: {}, label: "delta が欠如" },
+    ])(
+      "400 を返す: $label",
+      async ({ body }: { body: Record<string, unknown>; label: string }) => {
+        const req = makeRequest("PATCH", "/api/done/actions/1", body);
+        const res = await PATCH(req, {
+          params: Promise.resolve({ actionId: "1" }),
+        });
+        expect(res.status).toBe(400);
+        const json = await res.json();
+        expect(json.error).toBeDefined();
+      },
+    );
   });
 
   it("doneAction が存在しない場合は { ok: true } を返す", async () => {

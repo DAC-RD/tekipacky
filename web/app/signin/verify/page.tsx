@@ -29,7 +29,7 @@ export default function VerifyRequestPage() {
           className="rounded-2xl p-4 mb-6 text-sm"
           style={{ background: "var(--surface)", color: "var(--muted)" }}
         >
-          リンクの有効期限は 24 時間です。
+          リンクの有効期限は 1 時間です。
           <br />
           メールが届かない場合は迷惑メールフォルダもご確認ください。
         </div>

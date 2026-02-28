@@ -6,8 +6,9 @@ import type {
   DoneRewardModel,
 } from "@/app/generated/prisma/models";
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/prisma", () => {
+  const $transaction = vi.fn();
+  const prismaMock = {
     user: {
       findUniqueOrThrow: vi.fn(),
       update: vi.fn(),
@@ -18,8 +19,13 @@ vi.mock("@/lib/prisma", () => ({
     doneReward: {
       upsert: vi.fn(),
     },
-  },
-}));
+    $transaction,
+  };
+  $transaction.mockImplementation((fn: (tx: unknown) => Promise<unknown>) =>
+    fn(prismaMock),
+  );
+  return { prisma: prismaMock };
+});
 
 import { prisma } from "@/lib/prisma";
 import { POST } from "@/app/api/done/rewards/route";

@@ -10,6 +10,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Resend({
       from: process.env.AUTH_EMAIL_FROM,
+      maxAge: 60 * 60, // 1時間（秒単位）
     }),
   ],
   session: { strategy: "jwt" },

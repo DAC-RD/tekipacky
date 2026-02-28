@@ -15,9 +15,9 @@ describe("VerifyRequestPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("24 時間の有効期限の注意文が表示される", () => {
+  it("1 時間の有効期限の注意文が表示される", () => {
     render(<VerifyRequestPage />);
-    expect(screen.getByText(/24 時間/)).toBeInTheDocument();
+    expect(screen.getByText(/1 時間/)).toBeInTheDocument();
   });
 
   it("「別のメールアドレスで試す」リンクが /signin を指す", () => {

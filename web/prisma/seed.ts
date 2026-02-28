@@ -707,6 +707,12 @@ const DEFAULT_REWARDS = [
 ];
 
 async function main() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "シードスクリプトは本番環境では実行できません。NODE_ENV を確認してください。",
+    );
+  }
+
   // 既存のテストユーザーを削除してから再作成
   const TEST_USER_ID = "seed-test-user";
 
