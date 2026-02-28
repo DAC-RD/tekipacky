@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
+import { modeFromDb } from "@/lib/utils";
 import {
   getDateForTimezone,
-  modeFromDb,
   toActionResponse,
   toRewardResponse,
   toDoneItemResponse,
-} from "@/lib/utils";
+} from "@/lib/server/transforms";
 
 export async function GET(req: NextRequest) {
   const userId = getUserId(req);

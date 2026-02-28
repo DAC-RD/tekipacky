@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { toDoneItemResponse } from "@/lib/utils";
+import { toDoneItemResponse } from "@/lib/server/transforms";
 import { DoneItem } from "@/lib/types";
 
 /**
