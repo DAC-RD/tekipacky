@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { parseEmailChangeIdentifier } from "@/lib/tokens";
 
 type Props = {
   searchParams: Promise<{ token?: string }>;
@@ -15,7 +16,7 @@ export default async function EmailVerifyPage({ searchParams }: Props) {
 
   const vt = await prisma.verificationToken.findFirst({ where: { token } });
 
-  if (!vt || !vt.identifier.startsWith("email-change:")) {
+  if (!vt) {
     return <ErrorPage message="無効なリンクです。" />;
   }
 
@@ -25,14 +26,11 @@ export default async function EmailVerifyPage({ searchParams }: Props) {
     );
   }
 
-  // identifier = "email-change:${userId}|${newEmail}"
-  const rest = vt.identifier.replace("email-change:", "");
-  const pipeIndex = rest.indexOf("|");
-  if (pipeIndex === -1) {
-    return <ErrorPage message="無効なトークンです。" />;
+  const parsed = parseEmailChangeIdentifier(vt.identifier);
+  if (!parsed) {
+    return <ErrorPage message="無効なリンクです。" />;
   }
-  const userId = rest.slice(0, pipeIndex);
-  const newEmail = rest.slice(pipeIndex + 1);
+  const { userId, newEmail } = parsed;
 
   // 新しいメールが既に使用されていないか再確認
   const existing = await prisma.user.findUnique({ where: { email: newEmail } });

@@ -30,7 +30,10 @@ export async function GET(req: NextRequest) {
     mode: modeFromDb(user.mode),
     actions: actions.map(toActionResponse),
     rewards: rewards.map(toRewardResponse),
-    // actionId/rewardId が null（削除済み）のものは除外
+    // actionId/rewardId が null のレコードは「Action/Reward が削除されたが過去ログとして残っているもの」。
+    // schema.prisma の onDelete: SetNull により、Action/Reward 削除時に外部キーが NULL 化される。
+    // フロント側では削除済みのマスタに紐づく Done ログは表示できないため除外する。
+    // ※このフィルタを外したり、nullable 制約を外したりすると整合性が崩れるので注意。
     doneActions: doneActions
       .filter((d) => d.actionId !== null)
       .map(toDoneItemResponse),
