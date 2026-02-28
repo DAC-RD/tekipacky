@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   // Resend でメール送信
   const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
   const verifyUrl = `${baseUrl}/settings/email-verify?token=${token}`;
-  await fetch("https://api.resend.com/emails", {
+  const resendRes = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.AUTH_RESEND_KEY}`,
@@ -71,6 +71,14 @@ export async function POST(req: NextRequest) {
       `,
     }),
   });
+  if (!resendRes.ok) {
+    const err = await resendRes.json().catch(() => ({}));
+    console.error("Resend error:", err);
+    return NextResponse.json(
+      { error: "メール送信に失敗しました。しばらく経ってから再試行してください。" },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }
