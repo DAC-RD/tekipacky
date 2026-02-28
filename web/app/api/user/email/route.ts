@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   const token = crypto.randomUUID();
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1時間
   const identifier = `${IDENTIFIER_PREFIX}${userId}|${newEmail}`;
 
   // ユーザーの既存トークンを削除して新しいトークンを作成
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
         <p>テキパッキーのメールアドレス変更リクエストを受け付けました。</p>
         <p>以下のリンクをクリックして、メールアドレスの変更を完了してください。</p>
         <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-        <p>このリンクは24時間有効です。</p>
+        <p>このリンクは1時間有効です。</p>
         <p>このメールに心当たりがない場合は、無視してください。</p>
       `,
     }),
