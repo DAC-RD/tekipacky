@@ -50,8 +50,15 @@ export async function POST(req: NextRequest) {
   });
 
   // Resend でメール送信
-  const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
-  const verifyUrl = `${baseUrl}/settings/email-verify?token=${token}`;
+  const baseUrl = process.env.AUTH_URL;
+  if (!baseUrl && process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "サーバー設定エラーが発生しました。管理者にお問い合わせください。" },
+      { status: 500 },
+    );
+  }
+  const resolvedUrl = baseUrl ?? "http://localhost:3000";
+  const verifyUrl = `${resolvedUrl}/settings/email-verify?token=${token}`;
   const resendRes = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
