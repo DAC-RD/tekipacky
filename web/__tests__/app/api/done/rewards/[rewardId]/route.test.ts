@@ -118,19 +118,22 @@ describe("PATCH /api/done/rewards/[rewardId]", () => {
 
   describe("バリデーション - 不正値で 400 を返す", () => {
     it.each([
-      [{ delta: 0 }, "delta が 0"],
-      [{ delta: 1.5 }, "delta が小数"],
-      [{ delta: "1" }, "delta が文字列"],
-      [{}, "delta が欠如"],
-    ])("400 を返す: %s", async (body) => {
-      const req = makeRequest("PATCH", "/api/done/rewards/1", body);
-      const res = await PATCH(req, {
-        params: Promise.resolve({ rewardId: "1" }),
-      });
-      expect(res.status).toBe(400);
-      const json = await res.json();
-      expect(json.error).toBeDefined();
-    });
+      { body: { delta: 0 }, label: "delta が 0" },
+      { body: { delta: 1.5 }, label: "delta が小数" },
+      { body: { delta: "1" }, label: "delta が文字列" },
+      { body: {}, label: "delta が欠如" },
+    ])(
+      "400 を返す: $label",
+      async ({ body }: { body: Record<string, unknown>; label: string }) => {
+        const req = makeRequest("PATCH", "/api/done/rewards/1", body);
+        const res = await PATCH(req, {
+          params: Promise.resolve({ rewardId: "1" }),
+        });
+        expect(res.status).toBe(400);
+        const json = await res.json();
+        expect(json.error).toBeDefined();
+      },
+    );
   });
 
   it("doneReward が存在しない場合は { ok: true } を返す", async () => {

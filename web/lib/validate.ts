@@ -23,12 +23,7 @@ export function assertInt(
   min: number,
   max: number,
 ): number {
-  if (
-    typeof v !== "number" ||
-    !Number.isInteger(v) ||
-    v < min ||
-    v > max
-  ) {
+  if (typeof v !== "number" || !Number.isInteger(v) || v < min || v > max) {
     throw new ValidationError(`${name} は${min}〜${max}の整数が必要です`);
   }
   return v;
@@ -41,7 +36,10 @@ export function assertNonZeroInt(v: unknown, name: string): number {
   return v;
 }
 
-export function assertOptionalString(v: unknown, name: string): string | undefined {
+export function assertOptionalString(
+  v: unknown,
+  name: string,
+): string | undefined {
   if (v === undefined) return undefined;
   if (typeof v !== "string") {
     throw new ValidationError(`${name} は文字列が必要です`);
@@ -62,7 +60,9 @@ export function assertOptionalStringArray(
 
 export function assertMode(v: unknown): "easy" | "normal" | "hard" {
   if (v !== "easy" && v !== "normal" && v !== "hard") {
-    throw new ValidationError("mode は easy / normal / hard のいずれかが必要です");
+    throw new ValidationError(
+      "mode は easy / normal / hard のいずれかが必要です",
+    );
   }
   return v;
 }

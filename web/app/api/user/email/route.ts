@@ -53,7 +53,10 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.AUTH_URL;
   if (!baseUrl && process.env.NODE_ENV === "production") {
     return NextResponse.json(
-      { error: "サーバー設定エラーが発生しました。管理者にお問い合わせください。" },
+      {
+        error:
+          "サーバー設定エラーが発生しました。管理者にお問い合わせください。",
+      },
       { status: 500 },
     );
   }
@@ -82,7 +85,10 @@ export async function POST(req: NextRequest) {
     const err = await resendRes.json().catch(() => ({}));
     console.error("Resend error:", err);
     return NextResponse.json(
-      { error: "メール送信に失敗しました。しばらく経ってから再試行してください。" },
+      {
+        error:
+          "メール送信に失敗しました。しばらく経ってから再試行してください。",
+      },
       { status: 500 },
     );
   }

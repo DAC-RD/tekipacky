@@ -53,20 +53,41 @@ describe("PUT /api/rewards/[id]", () => {
 
   describe("バリデーション - 不正値で 400 を返す", () => {
     it.each([
-      [{ title: "", satisfaction: 1, time: 1, price: 1 }, "title が空文字"],
-      [{ satisfaction: 1, time: 1, price: 1 }, "title が欠如"],
-      [{ title: "x", satisfaction: 0, time: 1, price: 1 }, "satisfaction が 0"],
-      [{ title: "x", satisfaction: 6, time: 1, price: 1 }, "satisfaction が 6"],
-      [{ title: "x", satisfaction: 1, time: 0, price: 1 }, "time が 0"],
-      [{ title: "x", satisfaction: 1, time: 481, price: 1 }, "time が 481"],
-      [{ title: "x", satisfaction: 1, time: 1, price: 0 }, "price が 0"],
-    ])("400 を返す: %s", async (body) => {
-      const req = makeRequest("PUT", "/api/rewards/1", body);
-      const res = await PUT(req, { params: Promise.resolve({ id: "1" }) });
-      expect(res.status).toBe(400);
-      const json = await res.json();
-      expect(json.error).toBeDefined();
-    });
+      {
+        body: { title: "", satisfaction: 1, time: 1, price: 1 },
+        label: "title が空文字",
+      },
+      { body: { satisfaction: 1, time: 1, price: 1 }, label: "title が欠如" },
+      {
+        body: { title: "x", satisfaction: 0, time: 1, price: 1 },
+        label: "satisfaction が 0",
+      },
+      {
+        body: { title: "x", satisfaction: 6, time: 1, price: 1 },
+        label: "satisfaction が 6",
+      },
+      {
+        body: { title: "x", satisfaction: 1, time: 0, price: 1 },
+        label: "time が 0",
+      },
+      {
+        body: { title: "x", satisfaction: 1, time: 481, price: 1 },
+        label: "time が 481",
+      },
+      {
+        body: { title: "x", satisfaction: 1, time: 1, price: 0 },
+        label: "price が 0",
+      },
+    ])(
+      "400 を返す: $label",
+      async ({ body }: { body: Record<string, unknown>; label: string }) => {
+        const req = makeRequest("PUT", "/api/rewards/1", body);
+        const res = await PUT(req, { params: Promise.resolve({ id: "1" }) });
+        expect(res.status).toBe(400);
+        const json = await res.json();
+        expect(json.error).toBeDefined();
+      },
+    );
   });
 
   it("update の where に userId が含まれる（オーナーシップ確認）", async () => {
