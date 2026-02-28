@@ -74,6 +74,8 @@ web/
 │   ├── utils.ts                  # ポイント計算・ユーティリティ関数
 │   ├── user.ts                   # ユーザーID抽出（ヘッダーから）
 │   ├── auth.ts                   # NextAuth 初期化（Resend Provider・PrismaAdapter）
+│   ├── done.ts                   # Done系共通処理（upsertDoneAction/upsertDoneReward）
+│   ├── validate.ts               # 入力バリデーションヘルパー（assertInt等）
 │   └── prisma.ts                 # Prismaクライアントシングルトン
 ├── prisma/
 │   ├── schema.prisma             # DBスキーマ
