@@ -19,6 +19,18 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ welcomeMessage }: DashboardProps) {
+  // トースト（ウェルカム & エラー共用）— useStore より先に宣言して onError コールバックに渡す
+  const [toast, setToast] = useState<{
+    message: string;
+    isError?: boolean;
+  } | null>(
+    welcomeMessage === "new"
+      ? { message: "アカウントを作成しました" }
+      : welcomeMessage === "returning"
+        ? { message: "ログインしました" }
+        : null,
+  );
+
   const {
     state,
     hydrated,
@@ -29,7 +41,7 @@ export default function Dashboard({ welcomeMessage }: DashboardProps) {
     saveItem,
     deleteItem,
     changeMode,
-  } = useStore();
+  } = useStore((msg) => setToast({ message: msg, isError: true }));
 
   // UI state
   const [currentTab, setCurrentTab] = useState<Tab>("action");
@@ -51,18 +63,6 @@ export default function Dashboard({ welcomeMessage }: DashboardProps) {
   const [flashKey, setFlashKey] = useState(0);
   const [floats, setFloats] = useState<FloatItem[]>([]);
   const floatIdRef = useRef(0);
-
-  // トースト（ウェルカム & エラー共用）
-  const [toast, setToast] = useState<{
-    message: string;
-    isError?: boolean;
-  } | null>(
-    welcomeMessage === "new"
-      ? { message: "アカウントを作成しました" }
-      : welcomeMessage === "returning"
-        ? { message: "ログインしました" }
-        : null,
-  );
   useEffect(() => {
     if (!toast) return;
     if (!toast.isError) window.history.replaceState({}, "", "/");

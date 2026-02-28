@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { INITIAL_STATE } from "@/lib/constants";
 import { AppState, Mode, Tab } from "@/lib/types";
 import { calcActionPt, calcRewardPt, upsertDoneItem } from "@/lib/utils";
@@ -8,9 +8,15 @@ import { ModalSaveData } from "@/components/ItemModal";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
-export function useStore() {
+export function useStore(onError?: (message: string) => void) {
   const [state, setState] = useState<AppState>(INITIAL_STATE);
   const [hydrated, setHydrated] = useState(false);
+
+  // 常に最新の onError を参照するための ref
+  const onErrorRef = useRef(onError);
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   // 初回マウント時にAPIから全状態を取得
   useEffect(() => {
@@ -39,7 +45,37 @@ export function useStore() {
         method: "POST",
         headers: JSON_HEADERS,
         body: JSON.stringify({ actionId: id }),
-      }).catch(console.error);
+      })
+        .then((res) => {
+          if (!res.ok) {
+            setState((prev) => ({
+              ...prev,
+              points: prev.points - pt,
+              doneActions: upsertDoneItem(
+                prev.doneActions,
+                id,
+                action.title,
+                pt,
+                -1,
+              ),
+            }));
+            onErrorRef.current?.("行動の記録に失敗しました");
+          }
+        })
+        .catch(() => {
+          setState((prev) => ({
+            ...prev,
+            points: prev.points - pt,
+            doneActions: upsertDoneItem(
+              prev.doneActions,
+              id,
+              action.title,
+              pt,
+              -1,
+            ),
+          }));
+          onErrorRef.current?.("行動の記録に失敗しました");
+        });
 
       return pt;
     },
@@ -70,7 +106,37 @@ export function useStore() {
         method: "POST",
         headers: JSON_HEADERS,
         body: JSON.stringify({ rewardId: id }),
-      }).catch(console.error);
+      })
+        .then((res) => {
+          if (!res.ok) {
+            setState((prev) => ({
+              ...prev,
+              points: prev.points + pt,
+              doneRewards: upsertDoneItem(
+                prev.doneRewards,
+                id,
+                reward.title,
+                pt,
+                -1,
+              ),
+            }));
+            onErrorRef.current?.("ご褒美の記録に失敗しました");
+          }
+        })
+        .catch(() => {
+          setState((prev) => ({
+            ...prev,
+            points: prev.points + pt,
+            doneRewards: upsertDoneItem(
+              prev.doneRewards,
+              id,
+              reward.title,
+              pt,
+              -1,
+            ),
+          }));
+          onErrorRef.current?.("ご褒美の記録に失敗しました");
+        });
 
       return { pt, insufficient: false };
     },
@@ -99,7 +165,39 @@ export function useStore() {
         method: "PATCH",
         headers: JSON_HEADERS,
         body: JSON.stringify({ delta }),
-      }).catch(console.error);
+      })
+        .then((res) => {
+          if (!res.ok) {
+            setState((prev) => ({
+              ...prev,
+              points: prev.points - done.pt * delta,
+              doneActions: upsertDoneItem(
+                prev.doneActions,
+                id,
+                done.title,
+                done.pt,
+                -delta,
+                done.completedAt,
+              ),
+            }));
+            onErrorRef.current?.("記録の更新に失敗しました");
+          }
+        })
+        .catch(() => {
+          setState((prev) => ({
+            ...prev,
+            points: prev.points - done.pt * delta,
+            doneActions: upsertDoneItem(
+              prev.doneActions,
+              id,
+              done.title,
+              done.pt,
+              -delta,
+              done.completedAt,
+            ),
+          }));
+          onErrorRef.current?.("記録の更新に失敗しました");
+        });
     },
     [state],
   );
@@ -126,7 +224,39 @@ export function useStore() {
         method: "PATCH",
         headers: JSON_HEADERS,
         body: JSON.stringify({ delta }),
-      }).catch(console.error);
+      })
+        .then((res) => {
+          if (!res.ok) {
+            setState((prev) => ({
+              ...prev,
+              points: prev.points + done.pt * delta,
+              doneRewards: upsertDoneItem(
+                prev.doneRewards,
+                id,
+                done.title,
+                done.pt,
+                -delta,
+                done.completedAt,
+              ),
+            }));
+            onErrorRef.current?.("記録の更新に失敗しました");
+          }
+        })
+        .catch(() => {
+          setState((prev) => ({
+            ...prev,
+            points: prev.points + done.pt * delta,
+            doneRewards: upsertDoneItem(
+              prev.doneRewards,
+              id,
+              done.title,
+              done.pt,
+              -delta,
+              done.completedAt,
+            ),
+          }));
+          onErrorRef.current?.("記録の更新に失敗しました");
+        });
     },
     [state],
   );
@@ -189,14 +319,28 @@ export function useStore() {
   );
 
   /** 難易度モードを変更する */
-  const changeMode = useCallback((mode: Mode) => {
-    setState((prev) => ({ ...prev, mode }));
-    fetch("/api/user", {
-      method: "PATCH",
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ mode }),
-    }).catch(console.error);
-  }, []);
+  const changeMode = useCallback(
+    (mode: Mode) => {
+      const prevMode = state.mode;
+      setState((prev) => ({ ...prev, mode }));
+      fetch("/api/user", {
+        method: "PATCH",
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ mode }),
+      })
+        .then((res) => {
+          if (!res.ok) {
+            setState((prev) => ({ ...prev, mode: prevMode }));
+            onErrorRef.current?.("モードの変更に失敗しました");
+          }
+        })
+        .catch(() => {
+          setState((prev) => ({ ...prev, mode: prevMode }));
+          onErrorRef.current?.("モードの変更に失敗しました");
+        });
+    },
+    [state.mode],
+  );
 
   return {
     state,
