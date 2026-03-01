@@ -129,7 +129,7 @@ await prisma.doneAction.upsert({
 - ポイント計算は**DBに保存済みの `pt` 値**を使用（再計算しない）
 
 ```typescript
-// web/app/api/done/actions/[actionId]/route.ts
+// web/lib/done.ts
 await prisma.user.update({
   data: { points: { increment: existing.pt * delta } },
 });
