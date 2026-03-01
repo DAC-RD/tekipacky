@@ -12,7 +12,6 @@ User
  ├── Reward[]         (1:N) ─→ DoneReward  (1:N, nullable)
  ├── DoneAction[]     (1:N)
  ├── DoneReward[]     (1:N)
- ├── Account[]        (1:N) ← NextAuth 認証アカウント
  └── Session[]        (1:N) ← NextAuth セッション（JWT戦略では実質不使用）
 
 VerificationToken  ← NextAuth メールマジックリンクトークン（UserとのFK無し）
@@ -36,26 +35,9 @@ VerificationToken  ← NextAuth メールマジックリンクトークン（Use
 | `createdAt` | DateTime | now() | 作成日時 |
 | `updatedAt` | DateTime | 自動更新 | 更新日時 |
 
-**リレーション:** actions, rewards, doneActions, doneRewards（全てカスケード削除）、accounts, sessions（NextAuth 用、カスケード削除）
+**リレーション:** actions, rewards, doneActions, doneRewards（全てカスケード削除）、sessions（NextAuth 用、カスケード削除）
 
 **認証:** NextAuth v5 + Resend によるメールマジックリンク認証。JWT セッション戦略を採用。
-
----
-
-### Account（認証アカウント）
-
-NextAuth の PrismaAdapter が管理する標準テーブル。
-
-| カラム | 型 | 説明 |
-|---|---|---|
-| `userId` | String | ユーザーFK |
-| `type` | String | プロバイダー種別（"email" 等） |
-| `provider` | String | プロバイダー名（"resend" 等） |
-| `providerAccountId` | String | プロバイダー側のアカウントID |
-| `createdAt` | DateTime | 作成日時 |
-| `updatedAt` | DateTime | 更新日時 |
-
-**プライマリキー:** `(provider, providerAccountId)`
 
 ---
 
