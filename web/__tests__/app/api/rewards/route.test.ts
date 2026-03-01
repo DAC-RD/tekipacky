@@ -92,20 +92,24 @@ describe("POST /api/rewards", () => {
         label: "satisfaction が 0",
       },
       {
-        body: { title: "x", satisfaction: 6, time: 1, price: 1 },
-        label: "satisfaction が 6",
+        body: { title: "x", satisfaction: 4, time: 1, price: 1 },
+        label: "satisfaction が 4",
       },
       {
         body: { title: "x", satisfaction: 1, time: 0, price: 1 },
         label: "time が 0",
       },
       {
-        body: { title: "x", satisfaction: 1, time: 481, price: 1 },
-        label: "time が 481",
+        body: { title: "x", satisfaction: 1, time: 7, price: 1 },
+        label: "time が 7",
       },
       {
         body: { title: "x", satisfaction: 1, time: 1, price: 0 },
         label: "price が 0",
+      },
+      {
+        body: { title: "x", satisfaction: 1, time: 1, price: 7 },
+        label: "price が 7",
       },
     ])(
       "400 を返す: $label",

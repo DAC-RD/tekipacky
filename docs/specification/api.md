@@ -54,8 +54,8 @@
 | フィールド | 型 | 制約 |
 |---|---|---|
 | `title` | string | 1〜200文字 |
-| `hurdle` | integer | 1〜5 |
-| `time` | integer | 1〜480 |
+| `hurdle` | integer | 1〜3 |
+| `time` | integer | 1〜6 |
 | `desc` | string? | 省略可 |
 | `tags` | string[]? | 省略可 |
 
@@ -104,9 +104,9 @@
 | フィールド | 型 | 制約 |
 |---|---|---|
 | `title` | string | 1〜200文字 |
-| `satisfaction` | integer | 1〜5 |
-| `time` | integer | 1〜480 |
-| `price` | integer | 1〜100000 |
+| `satisfaction` | integer | 1〜3 |
+| `time` | integer | 1〜6 |
+| `price` | integer | 1〜6 |
 | `desc` | string? | 省略可 |
 | `tags` | string[]? | 省略可 |
 
@@ -265,7 +265,7 @@ HTTP 400
 **レスポンス:** `{ "ok": true }`
 
 **注意:**
-- User レコード削除により `onDelete: Cascade` で Action / Reward / DoneAction / DoneReward / Account / Session も自動削除される
+- User レコード削除により `onDelete: Cascade` で Action / Reward / DoneAction / DoneReward / Session も自動削除される
 - クライアント側でレスポンス受信後に `signOut()` を呼ぶ
 
 ---
