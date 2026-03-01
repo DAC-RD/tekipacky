@@ -158,7 +158,7 @@ export default function SettingsPage({ email, successMessage }: Props) {
             className="text-base font-black mb-1"
             style={{ color: "#ff5050" }}
           >
-            デンジャーゾーン
+            アカウント削除
           </h2>
           <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>
             削除すると全データが失われます。この操作は取り消せません。

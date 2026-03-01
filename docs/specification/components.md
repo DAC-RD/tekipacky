@@ -45,12 +45,12 @@
 **管理する状態:**
 | 状態 | 型 | 説明 |
 |---|---|---|
-| `tab` | `"action" \| "reward"` | 現在のタブ |
-| `searchQuery` | `string` | 検索クエリ（タブ別独立） |
-| `sortOrder` | `SortOrder` | ソート順（タブ別独立） |
-| `activeFilterTags` | `string[]` | 選択中タグ（タブ別独立） |
+| `currentTab` | `"action" \| "reward"` | 現在のタブ |
+| `searchQuery` | `Record<Tab, string>` | 検索クエリ（タブ別独立） |
+| `sortOrder` | `Record<Tab, SortOrder>` | ソート順（タブ別独立） |
+| `activeFilterTags` | `Record<Tab, string[]>` | 選択中タグ（タブ別独立） |
 | `modalOpen` | `boolean` | モーダルの開閉 |
-| `editItem` | `{type, id} \| null` | 編集対象アイテム |
+| `modalEditId` | `number \| null` | 編集対象アイテムのID |
 | `floats` | `FloatItem[]` | ポイント浮き上がりエフェクト |
 | `flashKey` | `number` | PointDisplay のフラッシュトリガー |
 
@@ -344,7 +344,7 @@ interface AppState {
    - 送信成功時: 「確認メールを送りました」メッセージを表示
    - エラー時: エラーメッセージを表示
 
-2. **デンジャーゾーン（アカウント削除）**
+2. **アカウント削除**
    - 「削除すると全データが失われます。この操作は取り消せません。」の警告
    - 「アカウントを削除」ボタン → 確認ダイアログ表示
    - ダイアログ: 「削除する」と入力させて確定
