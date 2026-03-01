@@ -161,6 +161,38 @@ docker compose exec app npx prisma migrate dev --name <migration-name>
 
 ---
 
+## ホスティング（本番環境）
+
+本番環境は **自宅の Raspberry Pi** 上で **Docker Compose** によりコンテナとして稼働している。外部公開は **Cloudflare Tunnel** を使い、さらに **Cloudflare Access** でアクセス制限をかけている（許可したユーザーのみアクセス可能）。
+
+大まかな構成:
+
+- Raspberry Pi
+  - Docker Compose で `app`（Next.js）や `db`（PostgreSQL）などを起動
+- Cloudflare Tunnel
+  - 自宅回線側から Cloudflare へトンネルを張って公開（ルータのポート開放を不要にする）
+- Cloudflare Access
+  - アプリ到達前に認証・許可を要求し、公開範囲を制御する
+
+---
+
+## CD（自動デプロイ）
+
+GitHub Actions の `cd.yml` により、`main` ブランチへの push（`web/**` の変更）をトリガーに **ビルド→レジストリへ push→Raspberry Pi へ反映** までを自動で行う。
+
+大まかな流れ:
+
+1. **Build & Push**
+   - `web/` をコンテキストに Docker イメージを **linux/arm64** でビルドし、GitHub Container Registry（GHCR）へ push
+
+2. **Deploy to Raspberry Pi**
+   - Actions から **Tailscale** で自宅ネットワーク（Pi）へ安全に到達
+   - Compose ファイルを Pi へコピーし、Secrets 由来の `.env` を配置
+   - Pi 側で GHCR から最新イメージを `docker pull` し、Compose で起動（DB が未起動なら全サービス、起動済みなら `app` のみ更新）
+   - 古いイメージを prune して容量を整理
+
+---
+
 ## ドキュメント
 
 詳細な仕様は `docs/specification/` を参照。
