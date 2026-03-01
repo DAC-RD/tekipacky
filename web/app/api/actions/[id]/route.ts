@@ -21,8 +21,8 @@ export async function PUT(
 
   try {
     assertStringInRange(title, "title", 1, 200);
-    assertInt(hurdle, "hurdle", 1, 5);
-    assertInt(time, "time", 1, 480);
+    assertInt(hurdle, "hurdle", 1, 3);
+    assertInt(time, "time", 1, 6);
     assertOptionalString(desc, "desc");
     assertOptionalStringArray(tags, "tags");
   } catch (e) {

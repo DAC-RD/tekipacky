@@ -167,6 +167,7 @@ export default async function Home({ searchParams }: Props) {
 
 | 変数 | 説明 | 取得方法 |
 |---|---|---|
+| `AUTH_URL` | アプリのベース URL（本番環境で必須。メール変更リンクの生成に使用） | デプロイ先の URL |
 | `AUTH_SECRET` | JWT 署名・暗号化用シークレット（32バイト以上推奨） | `openssl rand -base64 32` |
 | `AUTH_RESEND_KEY` | Resend API キー | Resend ダッシュボード → API Keys |
 | `AUTH_EMAIL_FROM` | 送信元メールアドレス | Resend で確認済みのドメインのアドレス |
@@ -181,7 +182,6 @@ NextAuth の PrismaAdapter が使用する標準テーブル。詳細は [data-m
 
 | テーブル | 役割 |
 |---|---|
-| `Account` | OAuth / Email プロバイダーのアカウント情報 |
 | `Session` | DB セッション（JWT 戦略では実質不使用） |
 | `VerificationToken` | メールマジックリンクの検証トークン |
 

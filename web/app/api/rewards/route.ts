@@ -17,9 +17,9 @@ export async function POST(req: NextRequest) {
 
   try {
     assertStringInRange(title, "title", 1, 200);
-    assertInt(satisfaction, "satisfaction", 1, 5);
-    assertInt(time, "time", 1, 480);
-    assertInt(price, "price", 1, 100000);
+    assertInt(satisfaction, "satisfaction", 1, 3);
+    assertInt(time, "time", 1, 6);
+    assertInt(price, "price", 1, 6);
     assertOptionalString(desc, "desc");
     assertOptionalStringArray(tags, "tags");
   } catch (e) {

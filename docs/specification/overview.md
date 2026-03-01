@@ -18,6 +18,7 @@
 | DBドライバ | `@prisma/adapter-pg` + `pg` |
 | 認証 | NextAuth v5 (next-auth@beta) + Resend |
 | 単体テスト | Vitest 4 + @testing-library/react |
+| 統合テスト | Vitest + 実 PostgreSQL (tmpfs) |
 | E2Eテスト | Playwright |
 | 実行環境 | Docker Compose |
 
@@ -95,10 +96,10 @@ web/
 │   ├── lib/                      # ユーティリティ関数テスト
 │   ├── components/               # コンポーネントテスト
 │   ├── hooks/                    # カスタムフックテスト
-│   └── app/api/                  # APIルートテスト
-├── __tests__/integration/        # 統合テスト（Vitest + 実 PostgreSQL）
-│   ├── done.test.ts              # upsertDoneAction/Reward・adjust 系の実DB検証
-│   └── state.test.ts             # SetNull cascade・日付フィルタの実DB検証
+│   ├── app/api/                  # APIルートテスト
+│   └── integration/              # 統合テスト（Vitest + 実 PostgreSQL）
+│       ├── done.test.ts          # upsertDoneAction/Reward・adjust 系の実DB検証
+│       └── state.test.ts         # SetNull cascade・日付フィルタの実DB検証
 ├── e2e/                          # E2Eテスト（Playwright）
 │   ├── auth.setup.ts             # JWE Cookie 生成・storageState 書き込み
 │   ├── api-flow.spec.ts          # 認証済み API フロー（serial）
@@ -177,9 +178,8 @@ npx vitest run __tests__/lib/utils.test.ts
 # テスト用 DB を起動（port 5433）
 docker compose -f docker-compose.test.yml up -d
 
-# 統合テスト実行
-docker compose -f docker-compose.test.yml exec app \
-  npx vitest run --config vitest.config.integration.ts
+# 統合テスト実行（メインの app コンテナから実行）
+docker compose exec app npm run test:integration
 
 # テスト後に DB を停止
 docker compose -f docker-compose.test.yml down

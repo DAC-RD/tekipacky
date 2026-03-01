@@ -56,10 +56,10 @@ describe("PUT /api/actions/[id]", () => {
       { body: { title: "", hurdle: 1, time: 1 }, label: "title が空文字" },
       { body: { hurdle: 1, time: 1 }, label: "title が欠如" },
       { body: { title: "x", hurdle: 0, time: 1 }, label: "hurdle が 0" },
-      { body: { title: "x", hurdle: 6, time: 1 }, label: "hurdle が 6" },
+      { body: { title: "x", hurdle: 4, time: 1 }, label: "hurdle が 4" },
       { body: { title: "x", hurdle: 1.5, time: 1 }, label: "hurdle が小数" },
       { body: { title: "x", hurdle: 1, time: 0 }, label: "time が 0" },
-      { body: { title: "x", hurdle: 1, time: 481 }, label: "time が 481" },
+      { body: { title: "x", hurdle: 1, time: 7 }, label: "time が 7" },
     ])(
       "400 を返す: $label",
       async ({ body }: { body: Record<string, unknown>; label: string }) => {
