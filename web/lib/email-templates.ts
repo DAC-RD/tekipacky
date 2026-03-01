@@ -10,10 +10,10 @@ function baseHtml(title: string, body: string): string {
   <div style="max-width:480px;margin:0 auto;">
 
     <!-- ヘッダー -->
-    <div style="background:linear-gradient(135deg,#ff6b35 0%,#ff9500 100%);border-radius:16px 16px 0 0;padding:32px 28px;text-align:center;">
-      <div style="font-size:36px;margin-bottom:6px;">⚡</div>
-      <div style="color:#fff;font-size:22px;font-weight:900;letter-spacing:1px;">テキパッキー</div>
-      <div style="color:rgba(255,255,255,0.75);font-size:12px;margin-top:4px;">行動活性化アプリ</div>
+    <div style="background:#0f0e17;border-radius:16px 16px 0 0;padding:32px 28px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:6px;color:#ff6b35;">✦</div>
+      <div style="color:#fffffe;font-size:22px;font-weight:900;letter-spacing:1px;">テキパッキー</div>
+      <div style="color:#7c7a8e;font-size:12px;margin-top:4px;">行動活性化アプリ</div>
     </div>
 
     <!-- ボディ -->
