@@ -206,3 +206,115 @@ it("deleteItem 後に actions から除外される", async () => {
 
 **警告について:**
 「An update to TestComponent inside a test was not wrapped in act」という警告は、テスト終了後に非同期の状態更新が発生したことを示す。初期状態を確認する際など、fetchの非同期解決を意図的に待たない場合に出ることがあるが、テスト自体は正しく動作する。
+
+---
+
+## useFilteredItems・useTagManager のテストパターン
+
+`fetch` を使わない純粋な入力→出力フックは、`renderHook` を使ってもよいが
+関数として直接呼び出してテストすることもできる。
+
+**実装例:**
+- `web/__tests__/hooks/useFilteredItems.test.ts`
+- `web/__tests__/hooks/useTagManager.test.ts`
+
+### useFilteredItems
+
+タグ AND フィルタ・テキスト検索・ソートを組み合わせたフィルタリングフック。
+
+```typescript
+import { renderHook } from "@testing-library/react";
+import { useFilteredItems } from "@/hooks/useFilteredItems";
+
+const sampleItems = [
+  { id: 1, title: "朝ごはん", desc: "", tags: ["健康", "朝"], hurdle: 2, time: 3 },
+  { id: 2, title: "散歩",    desc: "", tags: ["健康"],         hurdle: 1, time: 2 },
+];
+
+it("アクティブなタグでフィルタする（AND 条件）", () => {
+  const { result } = renderHook(() =>
+    useFilteredItems(sampleItems, ["健康", "朝"], "", "default", calcActionPt),
+  );
+  // 「健康」AND「朝」を両方持つのは id=1 のみ
+  expect(result.current).toHaveLength(1);
+  expect(result.current[0].id).toBe(1);
+});
+
+it("テキスト検索（大文字小文字非区別）", () => {
+  const { result } = renderHook(() =>
+    useFilteredItems(sampleItems, [], "あさ", "default", calcActionPt),
+  );
+  expect(result.current).toHaveLength(1);
+});
+
+it("pt-desc ソートで高ポイント順に並ぶ", () => {
+  const { result } = renderHook(() =>
+    useFilteredItems(sampleItems, [], "", "pt-desc", calcActionPt),
+  );
+  // id=1 の pt=6(2*3*1.0)、id=2 の pt=2(1*2*1.0)
+  expect(result.current[0].id).toBe(1);
+});
+
+it("元の配列を変更しない（イミュータブル）", () => {
+  const original = [...sampleItems];
+  renderHook(() =>
+    useFilteredItems(sampleItems, [], "", "pt-desc", calcActionPt),
+  );
+  expect(sampleItems).toEqual(original);
+});
+```
+
+**ポイント:**
+- `calcPt` 関数（`calcActionPt` または `calcRewardPt`）を引数で渡す設計
+- フィルタ・検索・ソートの組み合わせテストも実施する
+- 元配列が変更されていないことをイミュータビリティテストで確認する
+
+### useTagManager
+
+タグプール管理フック（ItemModal のタグ入力で使用）。
+
+```typescript
+import { renderHook, act } from "@testing-library/react";
+import { useTagManager } from "@/hooks/useTagManager";
+
+const allTags = ["健康", "朝", "習慣"];
+
+it("addTag は前後の空白をトリムして追加する", () => {
+  const { result } = renderHook(() => useTagManager([], allTags));
+  act(() => {
+    result.current.setInput("  健康  ");
+    result.current.addTag();
+  });
+  expect(result.current.tags).toContain("健康");
+});
+
+it("addTag は重複を追加しない", () => {
+  const { result } = renderHook(() => useTagManager(["健康"], allTags));
+  act(() => {
+    result.current.setInput("健康");
+    result.current.addTag();
+  });
+  expect(result.current.tags).toHaveLength(1);
+});
+
+it("filteredTagSuggestions は入力で絞り込む（大文字小文字非区別）", () => {
+  const { result } = renderHook(() => useTagManager([], allTags));
+  act(() => { result.current.setInput("け"); });
+  // 「健康」のひらがな部分を含む候補が返る
+  // ※ 実際の実装に合わせてテスト
+});
+
+it("toggleExistingTag でアクティブ↔非アクティブを切り替える", () => {
+  const { result } = renderHook(() => useTagManager(["健康"], allTags));
+  act(() => { result.current.toggleExistingTag("健康"); });
+  expect(result.current.tags).not.toContain("健康");
+
+  act(() => { result.current.toggleExistingTag("健康"); });
+  expect(result.current.tags).toContain("健康");
+});
+```
+
+**ポイント:**
+- `fetch` が不要なため `vi.stubGlobal("fetch", ...)` は不要
+- 各操作は `act()` でラップする（同期的な状態更新）
+- `addTag` の空白トリム・重複排除は境界値テストとして重要

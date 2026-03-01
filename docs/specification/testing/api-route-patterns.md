@@ -323,4 +323,22 @@ mockPrisma.user.findUniqueOrThrow.mockResolvedValue({ id: "x", points: 100 } as 
 | `POST /api/rewards` | reward.create |
 | `PUT /api/rewards/[id]` | reward.update |
 | `DELETE /api/rewards/[id]` | reward.delete |
+| `GET /api/user` | user.findUniqueOrThrow |
 | `PATCH /api/user` | user.update |
+| `DELETE /api/user` | user.delete |
+| `POST /api/user/email` | user.findUniqueOrThrow, verificationToken.create, Resend API モック |
+
+`POST /api/user/email` は外部メール API（Resend）を使用するため、追加のモックが必要:
+
+```typescript
+vi.mock("@/lib/resend", () => ({
+  resend: { emails: { send: vi.fn() } },
+}));
+import { resend } from "@/lib/resend";
+const mockResend = vi.mocked(resend, true);
+
+// テスト内で呼び出し確認
+expect(mockResend.emails.send).toHaveBeenCalledWith(
+  expect.objectContaining({ to: "new@example.com" }),
+);
+```
