@@ -43,12 +43,11 @@ web/
 │   │   │       ├── route.ts      # POST（消費記録・ポイント減算）
 │   │   │       └── [rewardId]/route.ts   # PATCH（回数調整）
 │   │   ├── state/route.ts        # GET（全状態取得）
-│   │   └── user/
-│   │       ├── route.ts          # GET（ユーザー情報取得）/ PATCH（モード変更）/ DELETE（アカウント削除）
-│   │       └── email/route.ts    # POST（メールアドレス変更リクエスト・Resend送信）
-│   ├── api/
-│   │   └── auth/[...nextauth]/route.ts  # NextAuth ハンドラ（GET / POST）
-│   ├── generated/prisma/         # 自動生成Prismaクライアント
+│   │   ├── user/
+│   │   │   ├── route.ts          # GET（ユーザー情報取得）/ PATCH（モード変更）/ DELETE（アカウント削除）
+│   │   │   └── email/route.ts    # POST（メールアドレス変更リクエスト・Resend送信）
+│   │   └── auth/
+│   │       └── [...nextauth]/route.ts  # NextAuth ハンドラ（GET / POST）
 │   ├── layout.tsx                # ルートレイアウト（フォント設定）
 │   ├── page.tsx                  # ルートページ（認証状態で LandingPage / Dashboard を振り分け）
 │   ├── signin/
@@ -59,15 +58,22 @@ web/
 │       └── email-verify/page.tsx # メール変更確認リンク処理
 ├── components/                   # Reactコンポーネント
 │   ├── Dashboard.tsx             # メインUIコンテナ（状態管理・ルーティング）
+│   ├── ActionCardList.tsx        # 行動カード一覧
+│   ├── RewardCardList.tsx        # ご褒美カード一覧
 │   ├── LandingPage.tsx           # 未認証ユーザー向けランディングページ
 │   ├── PointDisplay.tsx          # ポイント表示（フラッシュアニメーション付き）
 │   ├── FilterArea.tsx            # 検索・ソート・タグフィルター
 │   ├── ItemModal.tsx             # 行動・ご褒美の追加・編集モーダル
+│   ├── ActionForm.tsx            # 行動フォームフィールド（ItemModal サブ）
+│   ├── RewardForm.tsx            # ご褒美フォームフィールド（ItemModal サブ）
 │   ├── DoneAccordion.tsx         # 今日のログ（アコーディオン）
 │   ├── ModeSelector.tsx          # モード選択・ヘルプ・設定/サインアウトメニュー
-│   └── SettingsPage.tsx          # 設定ページUI（メール変更・アカウント削除）
+│   ├── SettingsPage.tsx          # 設定ページUI（メール変更・アカウント削除）
+│   └── WelcomeToast.tsx          # ウェルカム/エラートースト
 ├── hooks/
-│   └── useStore.ts               # アプリ状態管理フック（API連携）
+│   ├── useStore.ts               # アプリ状態管理フック（API連携）
+│   ├── useFilteredItems.ts       # フィルタ・検索・ソート共通フック
+│   └── useTagManager.ts          # タグ管理フック（ItemModal用）
 ├── lib/
 │   ├── types.ts                  # TypeScript型定義
 │   ├── constants.ts              # モード設定・デフォルトデータ（50行動・50ご褒美）
@@ -75,8 +81,12 @@ web/
 │   ├── user.ts                   # ユーザーID抽出（ヘッダーから）
 │   ├── auth.ts                   # NextAuth 初期化（Resend Provider・PrismaAdapter）
 │   ├── done.ts                   # Done系共通処理（upsertDoneAction/upsertDoneReward）
+│   ├── tokens.ts                 # メール変更トークン（build/parse）
 │   ├── validate.ts               # 入力バリデーションヘルパー（assertInt等）
-│   └── prisma.ts                 # Prismaクライアントシングルトン
+│   ├── prisma.ts                 # Prismaクライアントシングルトン
+│   ├── generated/prisma/         # 自動生成Prismaクライアント
+│   └── server/
+│       └── transforms.ts         # DB→API型変換・タイムゾーン日付変換
 ├── prisma/
 │   ├── schema.prisma             # DBスキーマ
 │   ├── seed.ts                   # シードデータ
@@ -86,9 +96,21 @@ web/
 │   ├── components/               # コンポーネントテスト
 │   ├── hooks/                    # カスタムフックテスト
 │   └── app/api/                  # APIルートテスト
+├── __tests__/integration/        # 統合テスト（Vitest + 実 PostgreSQL）
+│   ├── done.test.ts              # upsertDoneAction/Reward・adjust 系の実DB検証
+│   └── state.test.ts             # SetNull cascade・日付フィルタの実DB検証
+├── e2e/                          # E2Eテスト（Playwright）
+│   ├── auth.setup.ts             # JWE Cookie 生成・storageState 書き込み
+│   ├── api-flow.spec.ts          # 認証済み API フロー（serial）
+│   ├── public.spec.ts            # 認証保護スモーク
+│   └── db-helpers.ts             # pg 直接利用の DB ヘルパー
 ├── auth.config.ts                # Edge Runtime 用 Auth.js 設定（Prisma 非依存）
-├── vitest.config.ts              # Vitestの設定
+├── vitest.config.ts              # 単体テスト設定
+├── vitest.config.integration.ts  # 統合テスト設定（実 PostgreSQL）
+├── vitest.globalsetup.integration.ts  # 統合テスト前 DB リセット
 ├── vitest.setup.ts               # テスト環境セットアップ
+├── docker-compose.test.yml       # テスト用 PostgreSQL（port 5433, tmpfs）
+├── playwright.config.ts          # E2Eテスト設定（3プロジェクト構成）
 └── proxy.ts                      # Next.js Middleware（JWT認証・x-user-idヘッダー注入）
 ```
 
@@ -130,13 +152,14 @@ web/
 **楽観的更新の方針:**
 - ポイント計算はフロント側でも行い即時反映
 - サーバー側でも計算し直す（クライアント値を信頼しない）
-- API失敗時のロールバックは未実装（フェーズ1では許容）
+- API失敗時は楽観的更新をロールバックして元の状態に戻す
 
 ---
 
 ## テスト実行
 
 ```bash
+# ─── 単体テスト ───
 # コンテナに入る
 cd web
 docker compose exec app sh
@@ -150,6 +173,25 @@ npx vitest
 # 特定ファイル
 npx vitest run __tests__/lib/utils.test.ts
 
-# E2Eテスト
-npx playwright test
+# ─── 統合テスト（実 PostgreSQL 必須）───
+# テスト用 DB を起動（port 5433）
+docker compose -f docker-compose.test.yml up -d
+
+# 統合テスト実行
+docker compose -f docker-compose.test.yml exec app \
+  npx vitest run --config vitest.config.integration.ts
+
+# テスト後に DB を停止
+docker compose -f docker-compose.test.yml down
+
+# ─── E2Eテスト（開発サーバー必須）───
+# 開発 DB + 開発サーバーを起動
+docker compose up -d
+
+# E2Eテスト実行
+docker compose exec app npx playwright test --reporter=line
+
+# 特定プロジェクトのみ
+docker compose exec app npx playwright test --project=public
+docker compose exec app npx playwright test --project=authenticated
 ```

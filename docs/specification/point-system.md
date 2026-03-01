@@ -140,7 +140,7 @@ await prisma.user.update({
 「今日」の判定はユーザーのタイムゾーンに基づく。
 
 ```typescript
-// web/lib/utils.ts
+// web/lib/server/transforms.ts
 export function getDateForTimezone(timezone: string): string {
   return new Intl.DateTimeFormat("ja-JP", {
     timeZone: timezone,
