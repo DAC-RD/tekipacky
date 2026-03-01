@@ -30,7 +30,7 @@ tekipacky/
 ├── web/                  # Next.js アプリ本体
 ├── docs/
 │   ├── specification/    # 仕様書（API・コンポーネント・テスト等）
-│   └── sprints/          # スプリント設計・レビュー
+│   └── sprints/          # スプリント設計
 ├── .github/workflows/    # CI/CD (GitHub Actions)
 └── README.md
 ```
@@ -55,10 +55,6 @@ cp .env.example .env
 
 # コンテナを起動（初回はビルドに数分かかる）
 docker compose up -d
-
-# DB マイグレーション + シードデータ投入
-docker compose exec app npx prisma migrate deploy
-docker compose exec app npm run seed
 ```
 
 アプリは http://localhost:3000 で起動する。
