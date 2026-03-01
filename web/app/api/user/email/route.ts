@@ -5,6 +5,7 @@ import {
   buildEmailChangeIdentifier,
   buildEmailChangeUserPrefix,
 } from "@/lib/tokens";
+import { emailChangeEmailHtml } from "@/lib/email-templates";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
   }
   const resolvedUrl = baseUrl ?? "http://localhost:3000";
   const verifyUrl = `${resolvedUrl}/settings/email-verify?token=${token}`;
+  const { subject, html } = emailChangeEmailHtml(verifyUrl);
   const resendRes = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -74,14 +76,8 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       from: process.env.AUTH_EMAIL_FROM,
       to: [newEmail],
-      subject: "【テキパッキー】メールアドレス変更の確認",
-      html: `
-        <p>テキパッキーのメールアドレス変更リクエストを受け付けました。</p>
-        <p>以下のリンクをクリックして、メールアドレスの変更を完了してください。</p>
-        <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-        <p>このリンクは1時間有効です。</p>
-        <p>このメールに心当たりがない場合は、無視してください。</p>
-      `,
+      subject,
+      html,
     }),
   });
   if (!resendRes.ok) {
