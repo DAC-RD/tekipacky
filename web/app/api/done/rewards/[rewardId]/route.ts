@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
-import { getDateForTimezone } from "@/lib/utils";
+import { getDateForTimezone } from "@/lib/server/transforms";
 import { ValidationError, assertNonZeroInt } from "@/lib/validate";
+import { adjustDoneReward } from "@/lib/done";
 
 /** count を delta 分増減する。0以下になったレコードを削除する */
 export async function PATCH(
@@ -29,38 +30,7 @@ export async function PATCH(
   });
   const today = getDateForTimezone(user.timezone);
 
-  const existing = await prisma.doneReward.findUnique({
-    where: {
-      userId_rewardId_date: {
-        userId,
-        rewardId: Number(rewardId),
-        date: today,
-      },
-    },
-  });
-
-  if (!existing) {
-    return NextResponse.json({ ok: true });
-  }
-
-  const newCount = existing.count + delta;
-
-  // DBに保存済みのptを使用（クライアント値を信頼しない）
-  // ご褒美はdeltaが+なら消費増加（減算）、-なら消費減少（加算）
-  await prisma.$transaction(async (tx) => {
-    if (newCount <= 0) {
-      await tx.doneReward.delete({ where: { id: existing.id } });
-    } else {
-      await tx.doneReward.update({
-        where: { id: existing.id },
-        data: { count: newCount },
-      });
-    }
-    await tx.user.update({
-      where: { id: userId },
-      data: { points: { decrement: existing.pt * delta } },
-    });
-  });
+  await adjustDoneReward(userId, Number(rewardId), today, delta);
 
   return NextResponse.json({ ok: true });
 }

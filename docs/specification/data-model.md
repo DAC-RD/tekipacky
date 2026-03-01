@@ -195,8 +195,8 @@ enum Mode {
 `web/lib/prisma.ts` でシングルトンとして管理。
 
 ```typescript
-// PostgreSQLアダプター使用（接続プーリング）
-const adapter = new PrismaPg(new Pool({ connectionString: process.env.DATABASE_URL }));
+// PostgreSQLアダプター使用
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 export const prisma = new PrismaClient({ adapter });
 ```
 

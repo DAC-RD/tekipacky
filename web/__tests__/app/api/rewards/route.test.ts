@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeRequest } from "../../../helpers/request";
-import type { RewardModel } from "@/app/generated/prisma/models";
+import type { RewardModel } from "@/lib/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {

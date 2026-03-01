@@ -142,6 +142,106 @@
 
 ---
 
+## ActionCardList.tsx
+
+**役割:** 行動カードの一覧表示。Dashboard の行動タブで使用。`"use client"` ディレクティブ付き。
+
+**Props:**
+| Prop | 型 | 説明 |
+|---|---|---|
+| `actions` | `Action[]` | 表示する行動リスト（フィルタ済み） |
+| `mode` | `Mode` | ポイント計算に使用するモード |
+| `hydrated` | `boolean` | API取得完了フラグ（false の間は「読み込み中...」表示） |
+| `totalCount` | `number` | フィルタ前の総行動数 |
+| `hasFilter` | `boolean` | フィルタが有効かどうか |
+| `onComplete` | `(id: number, x: number, y: number) => void` | カードタップ時のコールバック（クリック座標付き） |
+| `onEdit` | `(id: number) => void` | 編集ボタン押下時のコールバック |
+
+**表示仕様:**
+- セクションタイトル「タップしてポイント獲得」を表示。フィルタ中は `(${表示件数}/${全件数}件)` を付与
+- `hydrated` が false → 「読み込み中...」
+- `actions` が空 → 「まだ行動がありません。＋ボタンで追加しましょう」
+- 各カード: タイトル（太字）、説明（オプション）、タグ一覧、ポイントバッジ `+{pt}pt`、編集ボタン `✎`
+- ポイントは `calcActionPt(hurdle, time, mode)` で計算して表示
+
+---
+
+## RewardCardList.tsx
+
+**役割:** ご褒美カードの一覧表示。Dashboard のご褒美タブで使用。`"use client"` ディレクティブ付き。
+
+**Props:**
+| Prop | 型 | 説明 |
+|---|---|---|
+| `rewards` | `Reward[]` | 表示するご褒美リスト（フィルタ済み） |
+| `mode` | `Mode` | ポイント計算に使用するモード |
+| `points` | `number` | 現在のポイント残高（残高不足の視覚化に使用） |
+| `hydrated` | `boolean` | API取得完了フラグ |
+| `totalCount` | `number` | フィルタ前の総ご褒美数 |
+| `hasFilter` | `boolean` | フィルタが有効かどうか |
+| `onComplete` | `(id: number, x: number, y: number) => void` | カードタップ時のコールバック |
+| `onEdit` | `(id: number) => void` | 編集ボタン押下時のコールバック |
+
+**表示仕様:**
+- ActionCardList と同様の構造だが、消費方向のスタイル（`reward-card`）を使用
+- `points < pt` のカードは `opacity-40` で薄表示（残高不足の視覚的フィードバック）
+- ポイントバッジは `-{pt}pt`
+- ポイントは `calcRewardPt(satisfaction, time, price, mode)` で計算して表示
+
+---
+
+## ActionForm.tsx
+
+**役割:** ItemModal 内で使用される行動フォームのサブコンポーネント。ハードルとかかる時間を選択する。`"use client"` ディレクティブ付き。
+
+**Props:**
+| Prop | 型 | 説明 |
+|---|---|---|
+| `hurdle` | `number` | 現在選択中のハードル値（1〜3） |
+| `time` | `number` | 現在選択中の時間値（1〜6） |
+| `onChange` | `(field: "hurdle" \| "time", value: number) => void` | 値変更コールバック |
+
+**フォームフィールド:**
+- ハードル: 低(×1) / 中(×2) / 高(×3) のボタン選択
+- かかる時間: 5分以内〜3時間以上の6択ボタン選択
+
+---
+
+## RewardForm.tsx
+
+**役割:** ItemModal 内で使用されるご褒美フォームのサブコンポーネント。満足度・かかる時間・金額を選択する。`"use client"` ディレクティブ付き。
+
+**Props:**
+| Prop | 型 | 説明 |
+|---|---|---|
+| `satisfaction` | `number` | 現在選択中の満足度値（1〜3） |
+| `time` | `number` | 現在選択中の時間値（1〜6） |
+| `price` | `number` | 現在選択中の金額値（1〜6） |
+| `onChange` | `(field: "satisfaction" \| "time" \| "price", value: number) => void` | 値変更コールバック |
+
+**フォームフィールド:**
+- 満足度: 小(×1) / 中(×2) / 大(×3) のボタン選択
+- かかる時間: 5分以内〜3時間以上の6択ボタン選択
+- 金額: 0円〜1万円以上の6択ボタン選択
+
+---
+
+## WelcomeToast.tsx
+
+**役割:** ウェルカムメッセージやエラー通知をトースト形式で表示する。Dashboard が管理する `toastState` と連動。`"use client"` ディレクティブ付き。
+
+**Props:**
+| Prop | 型 | 説明 |
+|---|---|---|
+| `toast` | `{ message: string; isError?: boolean } \| null` | 表示するトースト情報（null で非表示） |
+
+**表示仕様:**
+- `toast` が null のときは何も表示しない
+- `isError` が true のとき赤系スタイル（`toast-error` クラス）、通常は成功スタイル
+- アイコン: 通常は `✓`、エラーは `✕`
+
+---
+
 ## DoneAccordion.tsx
 
 **役割:** 今日の完了行動・消費ご褒美のログをアコーディオン形式で表示。

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
-import { calcActionPt, getDateForTimezone, modeFromDb } from "@/lib/utils";
+import { calcActionPt, modeFromDb } from "@/lib/utils";
+import { getDateForTimezone } from "@/lib/server/transforms";
 import { upsertDoneAction } from "@/lib/done";
 
 export async function POST(req: NextRequest) {

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
+import {
+  buildEmailChangeIdentifier,
+  buildEmailChangeUserPrefix,
+} from "@/lib/tokens";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const IDENTIFIER_PREFIX = "email-change:";
 
 export async function POST(req: NextRequest) {
   const userId = getUserId(req);
@@ -39,11 +42,11 @@ export async function POST(req: NextRequest) {
 
   const token = crypto.randomUUID();
   const expires = new Date(Date.now() + 60 * 60 * 1000); // 1時間
-  const identifier = `${IDENTIFIER_PREFIX}${userId}|${newEmail}`;
+  const identifier = buildEmailChangeIdentifier(userId, newEmail);
 
   // ユーザーの既存トークンを削除して新しいトークンを作成
   await prisma.verificationToken.deleteMany({
-    where: { identifier: { startsWith: `${IDENTIFIER_PREFIX}${userId}|` } },
+    where: { identifier: { startsWith: buildEmailChangeUserPrefix(userId) } },
   });
   await prisma.verificationToken.create({
     data: { identifier, token, expires },

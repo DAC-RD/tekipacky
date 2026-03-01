@@ -4,7 +4,7 @@ import type {
   UserModel,
   RewardModel,
   DoneRewardModel,
-} from "@/app/generated/prisma/models";
+} from "@/lib/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => {
   const $transaction = vi.fn();

@@ -6,7 +6,7 @@ import type {
   RewardModel,
   DoneActionModel,
   DoneRewardModel,
-} from "@/app/generated/prisma/models";
+} from "@/lib/generated/prisma/models";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {

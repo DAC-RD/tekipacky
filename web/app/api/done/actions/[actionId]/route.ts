@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
-import { getDateForTimezone } from "@/lib/utils";
+import { getDateForTimezone } from "@/lib/server/transforms";
 import { ValidationError, assertNonZeroInt } from "@/lib/validate";
+import { adjustDoneAction } from "@/lib/done";
 
 /** count を delta 分増減する。0以下になったレコードを削除する */
 export async function PATCH(
@@ -29,37 +30,7 @@ export async function PATCH(
   });
   const today = getDateForTimezone(user.timezone);
 
-  const existing = await prisma.doneAction.findUnique({
-    where: {
-      userId_actionId_date: {
-        userId,
-        actionId: Number(actionId),
-        date: today,
-      },
-    },
-  });
-
-  if (!existing) {
-    return NextResponse.json({ ok: true });
-  }
-
-  const newCount = existing.count + delta;
-
-  // DBに保存済みのptを使用（クライアント値を信頼しない）
-  await prisma.$transaction(async (tx) => {
-    if (newCount <= 0) {
-      await tx.doneAction.delete({ where: { id: existing.id } });
-    } else {
-      await tx.doneAction.update({
-        where: { id: existing.id },
-        data: { count: newCount },
-      });
-    }
-    await tx.user.update({
-      where: { id: userId },
-      data: { points: { increment: existing.pt * delta } },
-    });
-  });
+  await adjustDoneAction(userId, Number(actionId), today, delta);
 
   return NextResponse.json({ ok: true });
 }

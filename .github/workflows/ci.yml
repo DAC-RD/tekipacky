@@ -84,3 +84,43 @@ jobs:
 
       - name: Run unit tests (Vitest)
         run: npx vitest run
+
+  # ─── 統合テスト（実DB使用） ─────────────────────────────
+  test-integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: tekipacky_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run integration tests (Vitest + real DB)
+        run: npm run test:integration:ci
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5433/tekipacky_test

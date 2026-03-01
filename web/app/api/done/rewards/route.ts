@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
-import { calcRewardPt, getDateForTimezone, modeFromDb } from "@/lib/utils";
+import { calcRewardPt, modeFromDb } from "@/lib/utils";
+import { getDateForTimezone } from "@/lib/server/transforms";
 import { upsertDoneReward } from "@/lib/done";
 
 export async function POST(req: NextRequest) {

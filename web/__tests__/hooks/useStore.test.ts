@@ -421,6 +421,163 @@ describe("useStore", () => {
     });
   });
 
+  describe("ロールバック（API失敗時）", () => {
+    it("completeAction: API 500のとき楽観的更新がロールバックされonErrorが呼ばれる", async () => {
+      mockFetchJson(sampleState);
+      const onError = vi.fn();
+      const { result } = renderHook(() => useStore(onError));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+      await act(async () => {
+        await result.current.completeAction(1);
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(result.current.state.points).toBe(50); // ロールバック済み
+      expect(result.current.state.doneActions).toHaveLength(0); // ロールバック済み
+      expect(onError).toHaveBeenCalledWith("行動の記録に失敗しました");
+    });
+
+    it("completeReward: API失敗のとき楽観的更新がロールバックされonErrorが呼ばれる", async () => {
+      mockFetchJson(sampleState); // points=50
+      const onError = vi.fn();
+      const { result } = renderHook(() => useStore(onError));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+      await act(async () => {
+        await result.current.completeReward(1);
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(result.current.state.points).toBe(50); // ロールバック済み
+      expect(result.current.state.doneRewards).toHaveLength(0); // ロールバック済み
+      expect(onError).toHaveBeenCalledWith("ご褒美の記録に失敗しました");
+    });
+
+    it("adjustDoneAction: API失敗のとき楽観的更新がロールバックされonErrorが呼ばれる", async () => {
+      const stateWithDone = {
+        ...sampleState,
+        doneActions: [
+          {
+            id: 1,
+            title: "朝ごはんを食べる",
+            pt: 5,
+            count: 2,
+            completedAt: "2024-01-15",
+          },
+        ],
+      };
+      mockFetchJson(stateWithDone);
+      const onError = vi.fn();
+      const { result } = renderHook(() => useStore(onError));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+      await act(async () => {
+        result.current.adjustDoneAction(1, 1);
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(result.current.state.points).toBe(50); // ロールバック済み
+      expect(result.current.state.doneActions[0].count).toBe(2); // ロールバック済み
+      expect(onError).toHaveBeenCalledWith("記録の更新に失敗しました");
+    });
+
+    it("adjustDoneAction: delta=-1でアイテム削除後にAPI失敗したらアイテムが復元される", async () => {
+      const stateWithDone = {
+        ...sampleState,
+        doneActions: [
+          {
+            id: 1,
+            title: "朝ごはんを食べる",
+            pt: 5,
+            count: 1,
+            completedAt: "2024-01-15",
+          },
+        ],
+      };
+      mockFetchJson(stateWithDone);
+      const onError = vi.fn();
+      const { result } = renderHook(() => useStore(onError));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+      await act(async () => {
+        result.current.adjustDoneAction(1, -1);
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(result.current.state.doneActions).toHaveLength(1); // 復元済み
+      expect(result.current.state.doneActions[0].count).toBe(1);
+      expect(result.current.state.points).toBe(50); // ロールバック済み
+    });
+
+    it("adjustDoneReward: API失敗のとき楽観的更新がロールバックされonErrorが呼ばれる", async () => {
+      const stateWithDone = {
+        ...sampleState,
+        doneRewards: [
+          {
+            id: 1,
+            title: "Netflixを見る",
+            pt: 4,
+            count: 1,
+            completedAt: "2024-01-15",
+          },
+        ],
+      };
+      mockFetchJson(stateWithDone);
+      const onError = vi.fn();
+      const { result } = renderHook(() => useStore(onError));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+      await act(async () => {
+        result.current.adjustDoneReward(1, 1);
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(result.current.state.points).toBe(50); // ロールバック済み
+      expect(result.current.state.doneRewards[0].count).toBe(1); // ロールバック済み
+      expect(onError).toHaveBeenCalledWith("記録の更新に失敗しました");
+    });
+
+    it("changeMode: API失敗のときモードがロールバックされonErrorが呼ばれる", async () => {
+      mockFetchJson(sampleState); // mode=normal
+      const onError = vi.fn();
+      const { result } = renderHook(() => useStore(onError));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+      await act(async () => {
+        result.current.changeMode("hard");
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(result.current.state.mode).toBe("normal"); // ロールバック済み
+      expect(onError).toHaveBeenCalledWith("モードの変更に失敗しました");
+    });
+  });
+
   describe("saveItem", () => {
     it("新規アクション作成で POST /api/actions が呼ばれる", async () => {
       mockFetchJson(sampleState);

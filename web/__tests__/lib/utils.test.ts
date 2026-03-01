@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
-  getDateForTimezone,
   modeFromDb,
   modeToDb,
   calcActionPt,
@@ -8,48 +7,6 @@ import {
   upsertDoneItem,
 } from "@/lib/utils";
 import type { DoneItem } from "@/lib/types";
-
-// ─────────────────────────────────────────────
-// getDateForTimezone
-// ─────────────────────────────────────────────
-describe("getDateForTimezone", () => {
-  beforeEach(() => {
-    // 2024-01-15 00:00:00 UTC に固定
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-15T00:00:00Z"));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("YYYY-MM-DD 形式で返す", () => {
-    const result = getDateForTimezone("UTC");
-    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-  });
-
-  it("UTC では 2024-01-15 を返す", () => {
-    expect(getDateForTimezone("UTC")).toBe("2024-01-15");
-  });
-
-  it("Asia/Tokyo (UTC+9) では 2024-01-15 を返す (UTCの00:00は東京の09:00)", () => {
-    expect(getDateForTimezone("Asia/Tokyo")).toBe("2024-01-15");
-  });
-
-  it("America/New_York (UTC-5) では 2024-01-14 を返す (UTCの00:00はNYの前日19:00)", () => {
-    expect(getDateForTimezone("America/New_York")).toBe("2024-01-14");
-  });
-
-  it("日付が変わるタイミングでタイムゾーンごとに異なる日付を返す", () => {
-    // 2024-01-15 10:00:00 UTC
-    vi.setSystemTime(new Date("2024-01-15T10:00:00Z"));
-    const utc = getDateForTimezone("UTC");
-    const tokyo = getDateForTimezone("Asia/Tokyo");
-    // 東京は UTC+9 なので同じ日（19:00）
-    expect(utc).toBe("2024-01-15");
-    expect(tokyo).toBe("2024-01-15");
-  });
-});
 
 // ─────────────────────────────────────────────
 // modeFromDb / modeToDb

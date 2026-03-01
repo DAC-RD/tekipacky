@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/user";
-import { toActionResponse } from "@/lib/utils";
+import { toActionResponse } from "@/lib/server/transforms";
 import {
   ValidationError,
   assertStringInRange,

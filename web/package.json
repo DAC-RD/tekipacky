@@ -10,11 +10,13 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
-    "test:e2e": "playwright test",
+    "test:integration": "dotenv -e .env.test --override -- vitest run --config vitest.config.integration.ts",
+    "test:integration:ci": "vitest run --config vitest.config.integration.ts",
+    "test:e2e": "playwright test --reporter=line",
     "prepare": "husky",
-    "seed": "dotenv -e .env -- tsx prisma/seed.ts"
+    "seed": "prisma db seed"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
