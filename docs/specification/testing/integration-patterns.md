@@ -17,13 +17,18 @@ port 5433 の PostgreSQL コンテナをテスト専用で起動する。
 `tmpfs` を使用してテスト速度を向上させる。
 
 ```bash
-# テスト用 DB 起動
+# テスト用 DB 起動（port 5433, tmpfs）
 docker compose -f docker-compose.test.yml up -d
 
-# 統合テスト実行
-docker compose -f docker-compose.test.yml exec app \
-  npx vitest run --config vitest.config.integration.ts
+# 統合テスト実行（メイン app コンテナから実行。dotenv-cli が .env.test を読み込む）
+docker compose exec app npm run test:integration
+
+# テスト後に DB を停止
+docker compose -f docker-compose.test.yml down
 ```
+
+**注意:** `vitest.config.integration.ts` を直接 `npx vitest run` しないこと。
+`npm run test:integration` を使うことで `dotenv -e .env.test` が確実に読み込まれ、test DB（`tekipacky_test`）のみに接続される。
 
 ### vitest.globalsetup.integration.ts
 
@@ -32,7 +37,18 @@ docker compose -f docker-compose.test.yml exec app \
 ```typescript
 import { execSync } from "node:child_process";
 
+declare const process: { env: Record<string, string | undefined> };
+
 export function setup() {
+  const url = process.env.DATABASE_URL ?? "";
+  // 誤って開発/本番DBに接続しないためのガード
+  if (!url.includes("tekipacky_test")) {
+    throw new Error(
+      `[globalSetup] DATABASE_URL がテスト用DBを指していません。\n` +
+        `現在の値: ${url || "(未設定)"}\n` +
+        `統合テストは npm run test:integration で実行してください。`,
+    );
+  }
   execSync("npx prisma db push --force-reset --accept-data-loss", {
     stdio: "inherit",
   });

@@ -118,13 +118,16 @@ npx vitest
 # テスト用 DB を起動（port 5433）
 docker compose -f docker-compose.test.yml up -d
 
-# 統合テスト実行
-docker compose -f docker-compose.test.yml exec app \
-  npx vitest run --config vitest.config.integration.ts
+# 統合テスト実行（メイン app コンテナから。dotenv-cli が .env.test を読み込み test DB に接続）
+docker compose exec app npm run test:integration
 
 # 終了後にテスト用 DB を停止
 docker compose -f docker-compose.test.yml down
 ```
+
+**注意:** `npx vitest run --config vitest.config.integration.ts` を直接実行すると `.env.test` が読み込まれず、
+開発用 DB に `db push --force-reset` が走る危険があります。必ず `npm run test:integration` を使用してください。
+`vitest.globalsetup.integration.ts` はガードを持っており、`DATABASE_URL` が `tekipacky_test` を含まない場合は即座にエラーを throw します。
 
 ### E2Eテスト（開発サーバー必須）
 
